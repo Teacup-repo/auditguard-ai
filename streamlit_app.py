@@ -3,6 +3,8 @@
 import streamlit as st
 from datetime import datetime, timedelta
 import random
+import time
+import json
 
 # ---------------------------
 # Utility Functions
@@ -62,6 +64,15 @@ def fake_incidents():
         {"time": "09:00", "event": "🛡️ SOC team confirmed low risk — no breach"},
     ]
 
+def simulate_vault_fetch(path="/secret/data/db-creds"):
+    time.sleep(1.0)
+    return {
+        "username": "vault_user",
+        "password": "hunter2!",
+        "rotation": "2025-06-20",
+        "fetched_from": path
+    }
+
 # ---------------------------
 # Streamlit UI
 # ---------------------------
@@ -116,6 +127,14 @@ st.header("🧯 Recent Incident Timeline")
 timeline = fake_incidents()
 for item in timeline:
     st.markdown(f"- **{item['time']}**: {item['event']}")
+
+# --- Vault API Simulation ---
+st.markdown("---")
+st.header("🔐 Vault Secret API Simulation")
+if st.button("Simulate Vault Secret Fetch"):
+    secrets = simulate_vault_fetch()
+    st.json(secrets)
+    st.success("✔️ Simulated Vault secret fetch complete.")
 
 # --- Footer ---
 st.markdown("---")
