@@ -105,7 +105,6 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 | 💰 **Cost to Use**         | ✅ Free & open-source for learning/demo                 | ❌ Expensive (Splunk charges per GB/day)             | ❌ Licensing required                            |
 | 🎓 **Educational Value**   | ✅ Great for IAM, Vault, RBAC, encryption learning       | ⚠️ Complex setup, steep learning curve               | ⚠️ Focuses more on IT ops than security posture  |
 | 🛡️ **Compliance Frameworks** | ✅ PCI DSS, NIST, GDPR simulated checks                 | ✅ If logs and infra are configured properly          | ⚠️ Limited security compliance visibility        |
-| 🚀 **Demo Speed**          | ✅ Instant deployment via Streamlit                     | ❌ Requires infra, agents, and licenses              | ❌ Slower to deploy/configure                    |
 
 ---
 
