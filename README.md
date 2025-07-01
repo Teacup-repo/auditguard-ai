@@ -34,10 +34,12 @@ This capstone project was built to demonstrate how modern organizations can visu
 ## 🎯 Real-World Use Cases
 
 ✅ Accelerate **audit readiness** with proactive misconfig tracking
+
 🧠 Help **SOC teams** focus on risky access attempts with AI scoring
+
 🔒 Strengthen **data protection policies** using least privilege & encryption
-📊 Support **compliance reporting** for PCI DSS and NIST 800-53
-🔁 Easily extensible to **AWS Config, Azure Defender**, and real Vault APIs
+- 📊 Support **compliance reporting** for PCI DSS and NIST 800-53
+- 🔁 Easily extensible to **AWS Config, Azure Defender**, and real Vault APIs
 
 ---
 ## 💡 Why AuditGuard AI Matters
