@@ -93,7 +93,16 @@ Use these usernames to test access control and risk scoring:
 Try typing one of these into the dashboard to simulate access attempts and AI-driven risk scoring!
 
 ---
-
+🆚 AuditGuard AI vs Traditional Tools
+Feature / Tool	AuditGuard AI	SIEM (e.g. Splunk, Sentinel)	SolarWinds
+🔍 Purpose	Infra compliance demo + risk scoring	Log ingestion, correlation, alerting	Network monitoring and performance management
+🌐 Cloud Integration Ready	✅ AWS, Azure, GCP, Vault (extensible)	✅ Native integrations	⚠️ Primarily on-prem & hybrid
+🧠 AI/ML Risk Insights	✅ Risk score based on user/time context	✅ Available in advanced tier	❌ Not AI-driven
+🛠️ Customization	✅ Fully open and modifiable Python/Streamlit code	⚠️ Limited by license/tier	⚠️ Requires plugins or separate tools
+💰 Cost to Use	✅ Free & open-source for learning/demo	❌ Expensive (Splunk charges per GB/day)	❌ Licensing required
+🎓 Educational Value	✅ Great for learning IAM, Vault, RBAC, encryption, etc.	⚠️ Complex setup, steep learning curve	⚠️ Focuses more on IT ops than security posture
+🛡️ Compliance Frameworks	✅ PCI DSS, NIST, GDPR simulated checks	✅ (real audits/logs, if data ingested)	⚠️ Limited security compliance visibility
+🚀 Demo Speed	✅ Instant deployment via Streamlit	❌ Requires infra + agents + licenses	❌ Slower to deploy/configure
 ✨ Author
 Wachiraya Meevasana (Tanny)
 🔐 Cybersecurity Analyst | SaaS Security | Compliance Automation📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
