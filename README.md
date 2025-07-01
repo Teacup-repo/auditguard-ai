@@ -78,6 +78,21 @@ This capstone project was built to demonstrate how modern organizations can visu
    ```bash
    streamlit run streamlit_app.py
 ---
+
+## 👤 Sample Users for Testing
+
+Use these usernames to test access control and risk scoring:
+
+| Username | Allowed Resources         | Notes                            |
+|----------|---------------------------|----------------------------------|
+| `alice`  | `secrets`, `audit logs`   | High-risk data access            |
+| `bob`    | `models`                  | Restricted to non-sensitive data |
+| `tanny`  | `secrets`, `models`       | Mixed access                     |
+| `admin`  | `None` (denied by default)| Used for testing blocked access  |
+
+Try typing one of these into the dashboard to simulate access attempts and AI-driven risk scoring!
+---
+
 ✨ Author
 Wachiraya Meevasana (Tanny)
 🔐 Cybersecurity Analyst | SaaS Security | Compliance Automation📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
