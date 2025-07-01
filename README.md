@@ -41,6 +41,15 @@ This capstone project was built to demonstrate how modern organizations can visu
 
 ---
 
+## 📸 Demo Screenshots
+
+### 🔐 Access Control & AI-Powered Risk Scoring
+![Access Control Demo](https://github.com/Teacup-repo/auditguard-ai/raw/main/LandingPageDemo.png)
+
+### 🔑 Simulated Vault Secret Fetch (API Ready)
+![Vault API Simulation](https://github.com/Teacup-repo/auditguard-ai/raw/main/IRand%20APIVault.png)
+
+
 ## 🚀 Getting Started
 
 1. Clone the repo:
