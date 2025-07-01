@@ -40,7 +40,8 @@ This capstone project was built to demonstrate how modern organizations can visu
 - 🔁 Easily extensible to **AWS Config, Azure Defender**, and real Vault APIs
 
 ---
-💡 Why AuditGuard AI Matters
+## 💡 Why AuditGuard AI Matters
+
 🔍 Shift-Left Security: Catch misconfigs and risky access early — no need to wait for quarterly audits or breach reports.
 
 🧠 AI-Powered Prioritization: Helps SOC teams focus on what matters with contextual risk scoring and compliance flags.
