@@ -40,6 +40,15 @@ This capstone project was built to demonstrate how modern organizations can visu
 - 🔁 Easily extensible to **AWS Config, Azure Defender**, and real Vault APIs
 
 ---
+💡 Why AuditGuard AI Matters
+🔍 Shift-Left Security: Catch misconfigs and risky access early — no need to wait for quarterly audits or breach reports.
+
+🧠 AI-Powered Prioritization: Helps SOC teams focus on what matters with contextual risk scoring and compliance flags.
+
+🔐 Zero Trust-Ready Architecture: Implements least privilege and role-based controls, simulating how real infra isolates critical assets.
+
+🚀 SaaS-Savvy Compliance: Supports PCI-DSS, NIST 800-53, and GDPR principles — making it perfect for fintech, legal, and SaaS environments.
+---
 
 ## 📸 Demo Screenshots
 
@@ -65,9 +74,8 @@ This capstone project was built to demonstrate how modern organizations can visu
 ---
 ✨ Author
 Wachiraya Meevasana (Tanny)
-🔐 Cybersecurity | SaaS Security | Compliance Automation
-📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
+🔐 Cybersecurity Analyst | SaaS Security | Compliance Automation📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
 
 ---
 ❤️ Shoutout
-Built with love, Python, and too much coffee ☕.
+Built with love, Python, and too much coffee ☕
