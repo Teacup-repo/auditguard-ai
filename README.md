@@ -49,6 +49,7 @@ This capstone project was built to demonstrate how modern organizations can visu
 🔐 Zero Trust-Ready Architecture: Implements least privilege and role-based controls, simulating how real infra isolates critical assets.
 
 🚀 SaaS-Savvy Compliance: Supports PCI-DSS, NIST 800-53, and GDPR principles — making it perfect for fintech, legal, and SaaS environments.
+
 ---
 
 ## 📸 Demo Screenshots
