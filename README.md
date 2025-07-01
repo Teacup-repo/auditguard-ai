@@ -91,6 +91,7 @@ Use these usernames to test access control and risk scoring:
 | `admin`  | `None` (denied by default)| Used for testing blocked access  |
 
 Try typing one of these into the dashboard to simulate access attempts and AI-driven risk scoring!
+
 ---
 
 ✨ Author
