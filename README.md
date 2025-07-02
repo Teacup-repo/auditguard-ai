@@ -1,5 +1,5 @@
 # 🛡️ AuditGuard AI – Secure Infrastructure Design  
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://auditguard-ai.streamlit.app/)
+[![Launch in Streamlit](https://img.shields.io/badge/Launch%20Dashboard-🛡️%20Streamlit-black?style=for-the-badge&logo=streamlit)](https://auditguard-ai.streamlit.app/)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![Streamlit](https://img.shields.io/badge/streamlit-dashboard-orange)
 ![Compliance](https://img.shields.io/badge/compliance-PCI--DSS%20%7C%20NIST%20%7C%20GDPR-green)
