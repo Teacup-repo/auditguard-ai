@@ -1,6 +1,12 @@
 # 🛡️ AuditGuard AI – Secure Infrastructure Design  
+<h2 align="center">🚀 Launch Dashboard</h2>
 
-[![Launch in Streamlit](https://img.shields.io/badge/Launch%20Dashboard-🛡️%20Streamlit-black?style=for-the-badge&logo=streamlit)](https://auditguard-ai.streamlit.app/)
+<p align="center">
+  <a href="https://auditguard-ai.streamlit.app/">
+    <img src="https://img.shields.io/badge/Launch%20Dashboard-🛡️%20Streamlit-black?style=for-the-badge&logo=streamlit" alt="Launch in Streamlit">
+  </a>
+</p>
+
 
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![Streamlit](https://img.shields.io/badge/streamlit-dashboard-orange)
