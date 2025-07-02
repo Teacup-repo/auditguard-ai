@@ -1,5 +1,5 @@
 # 🛡️ AuditGuard AI – Secure Infrastructure Design  
-**[🚀 Live Demo → View on Streamlit](https://auditguard-ai.streamlit.app/)**
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://auditguard-ai.streamlit.app/)
 
 Welcome to **AuditGuard AI**, a security dashboard that simulates real-world infrastructure hardening using IAM, encryption, policy enforcement, and AI-assisted compliance insights.
 
@@ -16,6 +16,7 @@ This capstone project was built to demonstrate how modern organizations can visu
 - 🧯 **Incident Timeline**: Simulate incident response actions and events over time.
 - 🔐 **Vault Integration Ready**: Framework prepared to integrate HashiCorp Vault secrets and key-based policies.
 
+
 ---
 
 ## 📂 Tools & Libraries Used
@@ -29,7 +30,6 @@ This capstone project was built to demonstrate how modern organizations can visu
 | `OpenSSL`            | Demonstrated data-at-rest encryption         |
 | `NIST/PCI DSS`       | Compliance benchmarks for checks             |
 
----
 
 ## 🎯 Real-World Use Cases
 
