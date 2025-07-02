@@ -1,5 +1,9 @@
 # 🛡️ AuditGuard AI – Secure Infrastructure Design  
 [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://auditguard-ai.streamlit.app/)
+![Python](https://img.shields.io/badge/python-3.10-blue)
+![Streamlit](https://img.shields.io/badge/streamlit-dashboard-orange)
+![Compliance](https://img.shields.io/badge/compliance-PCI--DSS%20%7C%20NIST%20%7C%20GDPR-green)
+
 
 Welcome to **AuditGuard AI**, a security dashboard that simulates real-world infrastructure hardening using IAM, encryption, policy enforcement, and AI-assisted compliance insights.
 
