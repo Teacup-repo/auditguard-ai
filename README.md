@@ -117,5 +117,5 @@ Wachiraya Meevasana (Tanny)
 🔐 Cybersecurity Analyst | SaaS Security | Compliance Automation📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
 
 ---
-❤️ Shoutout
+❤️ 
 Built with love, Python, and too much coffee ☕
