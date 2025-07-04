@@ -112,13 +112,30 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 
 ---
 ### 🧠 GPT4All Integration for Compliance Checks  
-AuditGuard AI uses a lightweight local LLM (Nous Hermes 2 Mistral DPO via GPT4All) to simulate compliance audits, misconfiguration analysis, and Vault secret validation — all without sending data to external APIs.
 
-This ensures privacy-preserving, AI-driven insights aligned with Zero Trust and PCI DSS principles. Use it to simulate:
+AuditGuard AI integrates a lightweight, local LLM — **Nous Hermes 2 Mistral DPO via GPT4All** — to simulate compliance audits, secret validation, and misconfiguration analysis **entirely offline**.
 
-- 🔎 Misconfigured IAM permissions (e.g. wildcard roles)
-- 🔐 Expired or weak secrets pulled from Vault
-- 🚨 Unusual access patterns triggering risk alerts
+This module supports:
+
+- 🔎 **IAM misconfiguration detection** (e.g., wildcard roles, unused accounts)  
+- 🔐 **Vault secret risk checks** (e.g., weak, expired, or hardcoded secrets)  
+- 🚨 **Contextual access risk scoring** using role, time, and resource sensitivity  
+
+No internet? No problem. This setup delivers **privacy-preserving, AI-assisted insights** aligned with **PCI DSS**, **NIST 800-53**, and **Zero Trust** principles.
+
+> 💬 _Try this prompt in GPT4All:_  
+> ```json
+> Analyze this Vault secret fetch and highlight risks under PCI DSS and Zero Trust:  
+> {
+>   "username": "vault_user",
+>   "password": "hunter2!",
+>   "rotation": "2025-06-20",
+>   "fetched_from": "/secret/data/db-creds"
+> }
+> ```
+
+![GPT4All Integration](https://github.com/Teacup-repo/auditguard-ai/raw/main/GPT4ALL%20AuditGuard%20AI.png)
+
 
 ![GPT4All Integration](https://github.com/Teacup-repo/auditguard-ai/raw/main/GPT4ALL%20AuditGuard%20AI.png)
 ---
