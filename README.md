@@ -111,8 +111,15 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 | 🛡️ **Compliance Frameworks** | ✅ PCI DSS, NIST, GDPR simulated checks                 | ✅ If logs and infra are configured properly          | ⚠️ Limited security compliance visibility        |
 
 ---
+### 🧠 GPT4All Integration for Compliance Checks  
+AuditGuard AI uses a lightweight local LLM (Nous Hermes 2 Mistral DPO via GPT4All) to simulate compliance audits, misconfiguration analysis, and Vault secret validation — all without sending data to external APIs.
 
-### 🤖 GPT4All Local AI Assistant  
+This ensures privacy-preserving, AI-driven insights aligned with Zero Trust and PCI DSS principles. Use it to simulate:
+
+- 🔎 Misconfigured IAM permissions (e.g. wildcard roles)
+- 🔐 Expired or weak secrets pulled from Vault
+- 🚨 Unusual access patterns triggering risk alerts
+
 ![GPT4All Integration](https://github.com/Teacup-repo/auditguard-ai/raw/main/GPT4ALL%20AuditGuard%20AI.png)
 ---
 
