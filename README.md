@@ -112,6 +112,10 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 
 ---
 
+### 🤖 GPT4All Local AI Assistant  
+![GPT4All Integration](https://github.com/Teacup-repo/auditguard-ai/raw/main/GPT4ALL%20AuditGuard%20AI.png)
+---
+
 ✨ Author
 Wachiraya Meevasana (Tanny)
 🔐 Cybersecurity Analyst | SaaS Security | Compliance Automation📍 San Francisco | 🎓 CSUDH Cybersecurity Master's
