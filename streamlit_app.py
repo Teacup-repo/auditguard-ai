@@ -4,7 +4,6 @@ import streamlit as st
 from datetime import datetime, timedelta
 import random
 import time
-import json
 
 # ---------------------------
 # Utility Functions
@@ -30,12 +29,30 @@ def calculate_risk_score(user, resource):
 
 def get_compliance_checks():
     return {
-        "Firewall Rules": "✅ All inbound traffic restricted by default.",
-        "Encryption at Rest": "✅ AES-256 enabled across storage buckets.",
-        "IAM Policy Check": "⚠️ Admin role assigned to multiple users.",
-        "Public S3 Buckets": "❌ 2 buckets with public-read access.",
-        "SSH Access": "✅ Key-based authentication enforced.",
-        "Security Groups": "⚠️ Some groups allow 0.0.0.0/0 for SSH."
+        "Firewall Rules": {
+            "result": "✅ All inbound traffic restricted by default.",
+            "frameworks": ["NIST SC-7", "CIS Control 9.1", "ISO 27001 A.13.1.1"]
+        },
+        "Encryption at Rest": {
+            "result": "✅ AES-256 enabled across storage buckets.",
+            "frameworks": ["PCI DSS 3.5", "NIST SC-12", "ISO 27001 A.10.1"]
+        },
+        "IAM Policy Check": {
+            "result": "⚠️ Admin role assigned to multiple users.",
+            "frameworks": ["PCI DSS 7.1", "NIST AC-2", "ISO 27001 A.9.2.3"]
+        },
+        "Public S3 Buckets": {
+            "result": "❌ 2 buckets with public-read access.",
+            "frameworks": ["CIS Control 3.4", "NIST SC-28", "ISO 27001 A.8.2"]
+        },
+        "SSH Access": {
+            "result": "✅ Key-based authentication enforced.",
+            "frameworks": ["NIST IA-2", "CIS Control 5.2", "ISO 27001 A.9.4"]
+        },
+        "Security Groups": {
+            "result": "⚠️ Some groups allow 0.0.0.0/0 for SSH.",
+            "frameworks": ["CIS Control 4.1", "NIST AC-4", "ISO 27001 A.13.1.3"]
+        }
     }
 
 def generate_fake_logs():
@@ -101,13 +118,18 @@ if st.button("Check Access"):
 st.markdown("---")
 st.header("📋 Infrastructure Compliance Dashboard")
 compliance_data = get_compliance_checks()
-for check, result in compliance_data.items():
+for check, details in compliance_data.items():
+    result = details["result"]
+    frameworks = ", ".join(details["frameworks"])
+    msg = f"{check}: {result}\n\n🔎 **Compliance Mapping:** {frameworks}"
+
     if result.startswith("✅"):
-        st.success(f"{check}: {result}")
+        st.success(msg)
     elif result.startswith("⚠️"):
-        st.warning(f"{check}: {result}")
+        st.warning(msg)
     else:
-        st.error(f"{check}: {result}")
+        st.error(msg)
+
 # --- AI-Powered Compliance Auditor ---
 st.markdown("---")
 st.header("🧠 AI-Powered Compliance Auditor")
@@ -123,21 +145,18 @@ if st.button("Run AI Audit Review"):
 
             model = load_model()
 
-            report = "\n".join([f"{k}: {v}" for k, v in compliance_data.items()])
+            report = "\n".join([f"{k}: {v['result']}" for k, v in compliance_data.items()])
             prompt = f"""
-You are an IT compliance auditor. Review the following infrastructure compliance report and highlight any risks, red flags, or misconfigurations. Explain why each issue matters in a clear, professional tone.
+You are a security auditor. Review this compliance report and identify risks, misconfigurations, and violations. Tie them to NIST, PCI DSS, or ISO 27001 where possible:
 
-Report:
 {report}
 """
-
             output = model.generate(prompt, max_tokens=500)
             st.success("✅ AI Audit Summary:")
             st.write(output)
 
         except Exception as e:
             st.error(f"❌ Error running GPT4All: {str(e)}")
-
 
 # --- Access Logs ---
 st.markdown("---")
@@ -165,6 +184,15 @@ if st.button("Simulate Vault Secret Fetch"):
     secrets = simulate_vault_fetch()
     st.json(secrets)
     st.success("✔️ Simulated Vault secret fetch complete.")
+
+# --- Compliance Framework Legend ---
+with st.expander("🗂️ Compliance Framework Legend"):
+    st.markdown("""
+- **NIST**: NIST SP 800-53 Rev 5
+- **PCI DSS**: Payment Card Industry Data Security Standard v4.0
+- **ISO 27001**: International Standard for Information Security
+- **CIS**: Center for Internet Security Controls v8
+""")
 
 # --- Footer ---
 st.markdown("---")
