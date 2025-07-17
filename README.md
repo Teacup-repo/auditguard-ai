@@ -117,7 +117,7 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 AuditGuard AI leverages a lightweight, offline LLM (Nous Hermes 2 via GPT4All) to simulate compliance audits, detect IAM misconfigurations, and flag Vault secret risks — entirely on local machines, with no internet or external API required.
 
 ⚠️ Note:
-    This AI module does not run on the public Streamlit dashboard. To access GPT4All features, run the app locally using your own device.
+ This AI module does not run on the public Streamlit dashboard. To access GPT4All features, run the app locally using your own device.
 
 📸 Example AI-Generated Audit Summary (Local):
 ![AI Audit Result](https://github.com/Teacup-repo/auditguard-ai/raw/main/AI%20audit%20result.png)
