@@ -117,22 +117,27 @@ if st.button("Run AI Audit Review"):
         try:
             from gpt4all import GPT4All
 
-            model = GPT4All("mistral-7b-openorca.Q4_0.gguf")  # Ensure this model is downloaded first
+            @st.cache_resource
+            def load_model():
+                return GPT4All("mistral-7b-openorca.Q4_0.gguf")
+
+            model = load_model()
 
             report = "\n".join([f"{k}: {v}" for k, v in compliance_data.items()])
-            prompt = f"""You are an IT compliance auditor. Review the following infrastructure compliance report and summarize potential security risks, audit concerns, and any remediation advice:
+            prompt = f"""
+You are an IT compliance auditor. Review the following infrastructure compliance report and highlight any risks, red flags, or misconfigurations. Explain why each issue matters in a clear, professional tone.
 
+Report:
 {report}
-
-Use professional, audit-style tone with clear bullet points.
 """
 
-            response = model.generate(prompt, max_tokens=512)
+            output = model.generate(prompt, max_tokens=500)
             st.success("✅ AI Audit Summary:")
-            st.write(response)
+            st.write(output)
 
         except Exception as e:
             st.error(f"❌ Error running GPT4All: {str(e)}")
+
 
 # --- Access Logs ---
 st.markdown("---")
