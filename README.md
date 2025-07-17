@@ -68,6 +68,12 @@ This capstone project was built to demonstrate how modern organizations can visu
 ### 🔑 Simulated Vault Secret Fetch (API Ready)
 ![Vault API Simulation](https://github.com/Teacup-repo/auditguard-ai/raw/main/IRand%20APIVault.png)
 
+### 🤖 AI-Powered Compliance Review (Local LLM)
+
+AuditGuard AI integrates **GPT4All (Mistral DPO)** to simulate audit reviews and generate risk insights — completely offline, with no API key or cloud dependency.
+
+![AI Audit Result](https://github.com/Teacup-repo/auditguard-ai/raw/main/AI%20audit%20result.png)
+
 
 ## 🚀 Getting Started
 
