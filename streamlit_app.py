@@ -108,6 +108,31 @@ for check, result in compliance_data.items():
         st.warning(f"{check}: {result}")
     else:
         st.error(f"{check}: {result}")
+# --- AI-Powered Compliance Auditor ---
+st.markdown("---")
+st.header("🧠 AI-Powered Compliance Auditor")
+
+if st.button("Run AI Audit Review"):
+    with st.spinner("Summoning local AI auditor..."):
+        try:
+            from gpt4all import GPT4All
+
+            model = GPT4All("mistral-7b-openorca.Q4_0.gguf")  # Ensure this model is downloaded first
+
+            report = "\n".join([f"{k}: {v}" for k, v in compliance_data.items()])
+            prompt = f"""You are an IT compliance auditor. Review the following infrastructure compliance report and summarize potential security risks, audit concerns, and any remediation advice:
+
+{report}
+
+Use professional, audit-style tone with clear bullet points.
+"""
+
+            response = model.generate(prompt, max_tokens=512)
+            st.success("✅ AI Audit Summary:")
+            st.write(response)
+
+        except Exception as e:
+            st.error(f"❌ Error running GPT4All: {str(e)}")
 
 # --- Access Logs ---
 st.markdown("---")
