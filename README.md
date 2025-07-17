@@ -68,12 +68,6 @@ This capstone project was built to demonstrate how modern organizations can visu
 ### 🔑 Simulated Vault Secret Fetch (API Ready)
 ![Vault API Simulation](https://github.com/Teacup-repo/auditguard-ai/raw/main/IRand%20APIVault.png)
 
-### 🤖 AI-Powered Compliance Review (Local LLM)
-
-AuditGuard AI integrates **GPT4All (Mistral DPO)** to simulate audit reviews and generate risk insights — completely offline, with no API key or cloud dependency.
-
-![AI Audit Result](https://github.com/Teacup-repo/auditguard-ai/raw/main/AI%20audit%20result.png)
-
 
 ## 🚀 Getting Started
 
@@ -117,28 +111,13 @@ Try typing one of these into the dashboard to simulate access attempts and AI-dr
 | 🛡️ **Compliance Frameworks** | ✅ PCI DSS, NIST, GDPR simulated checks                 | ✅ If logs and infra are configured properly          | ⚠️ Limited security compliance visibility        |
 
 ---
-### 🧠 GPT4All Integration for Compliance Checks  
 
-AuditGuard AI integrates a lightweight, local LLM — **Nous Hermes 2 Mistral DPO via GPT4All** — to simulate compliance audits, secret validation, and misconfiguration analysis **entirely offline**.
+### 🧠 GPT4All Integration for Compliance Checks
 
-This module supports:
+AuditGuard AI leverages a lightweight, **local LLM** (Nous Hermes 2 via GPT4All) to simulate compliance audits, detect IAM misconfigs, and flag Vault risks — **all offline** with no internet or API needed.
 
-- 🔎 **IAM misconfiguration detection** (e.g., wildcard roles, unused accounts)  
-- 🔐 **Vault secret risk checks** (e.g., weak, expired, or hardcoded secrets)  
-- 🚨 **Contextual access risk scoring** using role, time, and resource sensitivity  
-
-> 💬 _Try this prompt in GPT4All:_  
-> ```json
-> Analyze this Vault secret fetch and highlight risks under PCI DSS and Zero Trust:  
-> {
->   "username": "vault_user",
->   "password": "hunter2!",
->   "rotation": "2025-06-20",
->   "fetched_from": "/secret/data/db-creds"
-> }
-> ```
-
-![GPT4All Integration](https://github.com/Teacup-repo/auditguard-ai/raw/main/GPT4ALL%20AuditGuard%20AI.png)
+📸 Example AI-Generated Audit Summary (Local):
+![AI Audit Result](https://github.com/Teacup-repo/auditguard-ai/raw/main/AI%20audit%20result.png)
 
 ---
 
