@@ -1,199 +1,296 @@
-# streamlit_app.py
-
+# streamlit_app.py  — AuditGuard (IAM Audit Readiness Dashboard)
 import streamlit as st
-from datetime import datetime, timedelta
-import random
-import time
+import pandas as pd
+from io import StringIO
+from datetime import datetime
+from typing import List, Dict, Tuple
 
-# ---------------------------
-# Utility Functions
-# ---------------------------
+st.set_page_config(page_title="AuditGuard – IAM Audit Readiness", page_icon="🛡️", layout="wide")
+st.title("🛡️ AuditGuard – IAM Audit Readiness Dashboard")
+st.caption("Prototype for real-time IAM control visibility and framework mapping (NIST, ISO 27001, PCI DSS, SOC 2)")
 
-def check_access(user, resource):
-    allowed_users = {
-        "alice": ["secrets", "audit logs"],
-        "bob": ["models"],
-        "tanny": ["secrets", "models"]
+# ------------- Helpers: Control mappings & risk logic -----------------
+
+CONTROL_MAP = {
+    "MFA_DISABLED_ADMIN": {
+        "description": "Admin account with MFA disabled",
+        "nist": ["AC-2(1)", "IA-2(1)"],
+        "iso": ["A.9.2.3", "A.9.4.2"],
+        "pci": ["8.3.1", "8.4.2"],
+        "soc2": ["CC6.1", "CC6.6"],
+        "severity": "High"
+    },
+    "NO_MFA_USER": {
+        "description": "User without MFA enabled",
+        "nist": ["IA-2(1)"],
+        "iso": ["A.9.4.2"],
+        "pci": ["8.3.1"],
+        "soc2": ["CC6.6"],
+        "severity": "Medium"
+    },
+    "INACTIVE_60": {
+        "description": "User inactive > 60 days",
+        "nist": ["AC-2(3)"],
+        "iso": ["A.9.2.6"],
+        "pci": ["8.2.6"],
+        "soc2": ["CC6.2"],
+        "severity": "Medium"
+    },
+    "STALE_CREDS_90": {
+        "description": "Credentials not rotated > 90 days",
+        "nist": ["IA-5(1)"],
+        "iso": ["A.9.2.4"],
+        "pci": ["8.3.6"],
+        "soc2": ["CC6.6"],
+        "severity": "High"
+    },
+    "ORPHANED_ACCOUNT": {
+        "description": "Account without active owner/manager",
+        "nist": ["AC-2"],
+        "iso": ["A.9.2.1"],
+        "pci": ["7.1.2"],
+        "soc2": ["CC6.1"],
+        "severity": "High"
+    },
+    "EXCESSIVE_ROLE": {
+        "description": "Elevated role not justified (non-admin in admin group)",
+        "nist": ["AC-6"],
+        "iso": ["A.9.1.2"],
+        "pci": ["7.1.1"],
+        "soc2": ["CC6.3"],
+        "severity": "Medium"
     }
-    return resource in allowed_users.get(user.lower(), [])
+}
 
-def calculate_risk_score(user, resource):
-    base_risk = {
-        "secrets": 80,
-        "audit logs": 65,
-        "models": 45
-    }.get(resource, 50)
-    if datetime.now().hour < 6 or datetime.now().hour > 22:
-        base_risk += 10  # risky hour
-    return min(base_risk + random.randint(-5, 5), 100)
+def _parse_bool(v):
+    if pd.isna(v): return None
+    s = str(v).strip().lower()
+    return True if s in ("true","t","yes","y","1","enabled","active","on") else False if s in ("false","f","no","n","0","disabled","inactive","off") else None
 
-def get_compliance_checks():
-    return {
-        "Firewall Rules": {
-            "result": "✅ All inbound traffic restricted by default.",
-            "frameworks": ["NIST SC-7", "CIS Control 9.1", "ISO 27001 A.13.1.1"]
-        },
-        "Encryption at Rest": {
-            "result": "✅ AES-256 enabled across storage buckets.",
-            "frameworks": ["PCI DSS 3.5", "NIST SC-12", "ISO 27001 A.10.1"]
-        },
-        "IAM Policy Check": {
-            "result": "⚠️ Admin role assigned to multiple users.",
-            "frameworks": ["PCI DSS 7.1", "NIST AC-2", "ISO 27001 A.9.2.3"]
-        },
-        "Public S3 Buckets": {
-            "result": "❌ 2 buckets with public-read access.",
-            "frameworks": ["CIS Control 3.4", "NIST SC-28", "ISO 27001 A.8.2"]
-        },
-        "SSH Access": {
-            "result": "✅ Key-based authentication enforced.",
-            "frameworks": ["NIST IA-2", "CIS Control 5.2", "ISO 27001 A.9.4"]
-        },
-        "Security Groups": {
-            "result": "⚠️ Some groups allow 0.0.0.0/0 for SSH.",
-            "frameworks": ["CIS Control 4.1", "NIST AC-4", "ISO 27001 A.13.1.3"]
-        }
-    }
-
-def generate_fake_logs():
-    users = ["alice", "bob", "tanny", "admin"]
-    resources = ["secrets", "audit logs", "models"]
-    logs = []
-    for _ in range(15):
-        user = random.choice(users)
-        res = random.choice(resources)
-        status = "allowed" if check_access(user, res) else "denied"
-        risk = calculate_risk_score(user, res)
-        logs.append({
-            "timestamp": datetime.now() - timedelta(minutes=random.randint(1, 500)),
-            "user": user,
-            "resource": res,
-            "access": status,
-            "risk_score": risk if status == "allowed" else "N/A"
-        })
-    return sorted(logs, key=lambda x: x["timestamp"], reverse=True)
-
-def fake_incidents():
-    return [
-        {"time": "08:12", "event": "🚨 Unauthorized access blocked (bob > secrets)"},
-        {"time": "08:30", "event": "✅ IAM policy scan completed (2 warnings)"},
-        {"time": "08:45", "event": "🔍 Analyst reviewed public S3 exposure"},
-        {"time": "09:00", "event": "🛡️ SOC team confirmed low risk — no breach"},
-    ]
-
-def simulate_vault_fetch(path="/secret/data/db-creds"):
-    time.sleep(1.0)
-    return {
-        "username": "vault_user",
-        "password": "hunter2!",
-        "rotation": "2025-06-20",
-        "fetched_from": path
-    }
-
-# ---------------------------
-# Streamlit UI
-# ---------------------------
-
-st.set_page_config(page_title="AuditGuard AI", page_icon="🛡️")
-st.title("🛡️ AuditGuard AI – Secure Infrastructure Dashboard")
-
-# --- Access Control Section ---
-st.header("🔐 User Access Control")
-user = st.text_input("Enter your username:")
-resource = st.selectbox("Select a resource to access:", ["secrets", "audit logs", "models"])
-
-if st.button("Check Access"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    if check_access(user, resource):
-        score = calculate_risk_score(user, resource)
-        st.success(f"✅ {user} has access to '{resource}'.")
-        st.info(f"🧠 Risk Score: {score}/100 at {timestamp}")
-        if score >= 80:
-            st.warning("🚨 High-risk access — consider alerting SOC.")
-    else:
-        st.error(f"❌ Access denied for {user}.")
-        st.info(f"🧠 Risk Score: N/A")
-
-# --- Compliance Dashboard ---
-st.markdown("---")
-st.header("📋 Infrastructure Compliance Dashboard")
-compliance_data = get_compliance_checks()
-for check, details in compliance_data.items():
-    result = details["result"]
-    frameworks = ", ".join(details["frameworks"])
-    msg = f"{check}: {result}\n\n🔎 **Compliance Mapping:** {frameworks}"
-
-    if result.startswith("✅"):
-        st.success(msg)
-    elif result.startswith("⚠️"):
-        st.warning(msg)
-    else:
-        st.error(msg)
-
-# --- AI-Powered Compliance Auditor ---
-st.markdown("---")
-st.header("🧠 AI-Powered Compliance Auditor")
-
-if st.button("Run AI Audit Review"):
-    with st.spinner("Summoning local AI auditor..."):
+def _parse_date(v):
+    if pd.isna(v) or str(v).strip()=="":
+        return None
+    for fmt in ("%Y-%m-%d","%Y/%m/%d","%m/%d/%Y","%d/%m/%Y","%Y-%m-%d %H:%M:%S"):
         try:
-            from gpt4all import GPT4All
+            return datetime.strptime(str(v), fmt)
+        except Exception:
+            continue
+    return None
 
-            @st.cache_resource
-            def load_model():
-                return GPT4All("mistral-7b-openorca.Q4_0.gguf")
+# ------------- Normalizers: bring different CSVs to one schema --------
+# Target schema columns:
+# username, email, role, is_admin (bool), mfa_enabled (bool),
+# last_login (datetime or None), creds_last_rotated (datetime or None), has_manager (bool)
 
-            model = load_model()
+def normalize_salesforce(df: pd.DataFrame) -> pd.DataFrame:
+    # Common Salesforce export columns: Username, Email, Profile, UserRole, IsActive, LastLoginDate, ManagerId
+    return pd.DataFrame({
+        "username": df.get("Username", df.get("UserName")),
+        "email": df.get("Email"),
+        "role": df.get("Profile", df.get("UserRole")),
+        "is_admin": df.get("Profile", "").astype(str).str.contains("System Administrator", case=False, na=False),
+        "mfa_enabled": df.get("IsMFAEnabled", df.get("MfaEnabled", False)).apply(_parse_bool),
+        "last_login": df.get("LastLoginDate").apply(_parse_date),
+        "creds_last_rotated": None,  # not in typical SF user export
+        "has_manager": df.get("ManagerId").notna() if "ManagerId" in df.columns else True
+    })
 
-            report = "\n".join([f"{k}: {v['result']}" for k, v in compliance_data.items()])
-            prompt = f"""
-You are a security auditor. Review this compliance report and identify risks, misconfigurations, and violations. Tie them to NIST, PCI DSS, or ISO 27001 where possible:
+def normalize_aws_iam(df: pd.DataFrame) -> pd.DataFrame:
+    # AWS Credential Report columns (examples): user, password_enabled, mfa_active, password_last_changed, access_key_1_last_rotated, arn, user_creation_time, group_list
+    last_rot = df.get("access_key_1_last_rotated", df.get("password_last_changed"))
+    role_guess = df.get("group_list", "").astype(str)
+    return pd.DataFrame({
+        "username": df.get("user"),
+        "email": None,
+        "role": role_guess,
+        "is_admin": role_guess.str.contains("Administrator", case=False, na=False),
+        "mfa_enabled": df.get("mfa_active").apply(_parse_bool),
+        "last_login": df.get("password_last_used", df.get("user_creation_time")).apply(_parse_date),
+        "creds_last_rotated": last_rot.apply(_parse_date) if isinstance(last_rot, pd.Series) else None,
+        "has_manager": True  # IAM users typically not modeled with managers
+    })
 
-{report}
-"""
-            output = model.generate(prompt, max_tokens=500)
-            st.success("✅ AI Audit Summary:")
-            st.write(output)
+def normalize_azure_entra(df: pd.DataFrame) -> pd.DataFrame:
+    # Typical bulk export columns: User principal name, Display name, Last sign-in date, MFA State, Roles
+    return pd.DataFrame({
+        "username": df.get("User principal name", df.get("UserPrincipalName")),
+        "email": df.get("User principal name", df.get("UserPrincipalName")),
+        "role": df.get("Roles", df.get("Directory roles")),
+        "is_admin": df.get("Roles", "").astype(str).str.contains("Global Administrator|Privileged", case=False, na=False),
+        "mfa_enabled": df.get("MFA State", df.get("MFA")).apply(_parse_bool),
+        "last_login": df.get("Last sign-in date", df.get("LastSignInDate")).apply(_parse_date),
+        "creds_last_rotated": None,
+        "has_manager": df.get("Manager").notna() if "Manager" in df.columns else True
+    })
 
-        except Exception as e:
-            st.error(f"❌ Error running GPT4All: {str(e)}")
+def normalize_generic(df: pd.DataFrame) -> pd.DataFrame:
+    # Expect columns close to the target schema; we best-effort map
+    return pd.DataFrame({
+        "username": df.get("username", df.get("user")),
+        "email": df.get("email"),
+        "role": df.get("role", df.get("group")),
+        "is_admin": df.get("is_admin", df.get("admin")).apply(_parse_bool) if "is_admin" in df.columns or "admin" in df.columns else False,
+        "mfa_enabled": df.get("mfa_enabled", df.get("MFA")).apply(_parse_bool) if "mfa_enabled" in df.columns or "MFA" in df.columns else None,
+        "last_login": df.get("last_login").apply(_parse_date) if "last_login" in df.columns else None,
+        "creds_last_rotated": df.get("creds_last_rotated").apply(_parse_date) if "creds_last_rotated" in df.columns else None,
+        "has_manager": df.get("has_manager").apply(_parse_bool) if "has_manager" in df.columns else True
+    })
 
-# --- Access Logs ---
-st.markdown("---")
-st.header("🕵️ Access Attempt Logs")
-logs = generate_fake_logs()
-for entry in logs:
-    msg = f"{entry['timestamp'].strftime('%Y-%m-%d %H:%M:%S')} | {entry['user']} tried to access '{entry['resource']}' — {entry['access']}"
-    if entry["access"] == "allowed":
-        msg += f" | Risk Score: {entry['risk_score']}"
-        st.info(msg)
+NORMALIZERS = {
+    "Salesforce": normalize_salesforce,
+    "AWS IAM": normalize_aws_iam,
+    "Azure Entra ID": normalize_azure_entra,
+    "Generic CSV": normalize_generic
+}
+
+# ---------------- Risk classification ----------------
+
+def classify_row(row) -> List[Tuple[str, str]]:
+    """Return list of (finding_code, reason) for the row."""
+    findings = []
+
+    is_admin = bool(row.get("is_admin") or (row.get("role") and "admin" in str(row.get("role")).lower()))
+    mfa = row.get("mfa_enabled")
+    last_login = row.get("last_login")
+    creds_rot = row.get("creds_last_rotated")
+    has_manager = row.get("has_manager", True)
+
+    # MFA conditions
+    if is_admin and (mfa is False or mfa is None):
+        findings.append(("MFA_DISABLED_ADMIN", "Admin without MFA"))
+    elif mfa is False:
+        findings.append(("NO_MFA_USER", "User without MFA"))
+
+    # Inactivity
+    if isinstance(last_login, datetime):
+        days = (datetime.now() - last_login).days
+        if days > 60:
+            findings.append(("INACTIVE_60", f"Inactive for {days} days"))
     else:
-        st.error(msg)
+        findings.append(("INACTIVE_60", "No last_login timestamp available"))
 
-# --- Incident Timeline ---
-st.markdown("---")
-st.header("🧯 Recent Incident Timeline")
-timeline = fake_incidents()
-for item in timeline:
-    st.markdown(f"- **{item['time']}**: {item['event']}")
+    # Credential rotation
+    if isinstance(creds_rot, datetime):
+        days = (datetime.now() - creds_rot).days
+        if days > 90:
+            findings.append(("STALE_CREDS_90", f"Credentials last rotated {days} days ago"))
 
-# --- Vault API Simulation ---
-st.markdown("---")
-st.header("🔐 Vault Secret API Simulation")
-if st.button("Simulate Vault Secret Fetch"):
-    secrets = simulate_vault_fetch()
-    st.json(secrets)
-    st.success("✔️ Simulated Vault secret fetch complete.")
+    # Ownership / orphaned
+    if has_manager is False:
+        findings.append(("ORPHANED_ACCOUNT", "No active manager assigned"))
 
-# --- Compliance Framework Legend ---
-with st.expander("🗂️ Compliance Framework Legend"):
+    # Excessive role example
+    role = str(row.get("role") or "")
+    if ("finance" in role.lower() or "hr" in role.lower()) and is_admin:
+        findings.append(("EXCESSIVE_ROLE", f"Elevated rights with business role: {role}"))
+
+    return findings
+
+def expand_findings(df: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for _, r in df.iterrows():
+        issues = classify_row(r)
+        if not issues:
+            rows.append({
+                **r.to_dict(),
+                "finding_code": None,
+                "finding": "No finding",
+                "severity": "Low",
+                "nist": "",
+                "iso": "",
+                "pci": "",
+                "soc2": ""
+            })
+        else:
+            for code, reason in issues:
+                meta = CONTROL_MAP[code]
+                rows.append({
+                    **r.to_dict(),
+                    "finding_code": code,
+                    "finding": f"{meta['description']} — {reason}",
+                    "severity": meta["severity"],
+                    "nist": ", ".join(meta["nist"]),
+                    "iso": ", ".join(meta["iso"]),
+                    "pci": ", ".join(meta["pci"]),
+                    "soc2": ", ".join(meta["soc2"])
+                })
+    return pd.DataFrame(rows)
+
+# ----------------------------- UI ------------------------------------
+
+st.header("📥 Upload IAM Exports")
+st.write("Upload CSVs from **Salesforce**, **AWS IAM**, **Azure Entra ID**, or a **Generic CSV** and select the correct source so AuditGuard can normalize the fields.")
+
+uploads = []
+cols = st.columns(3)
+for i in range(3):
+    with cols[i]:
+        src = st.selectbox(f"Source #{i+1}", ["—", "Salesforce", "AWS IAM", "Azure Entra ID", "Generic CSV"], key=f"src{i}")
+        file = st.file_uploader(f"Upload CSV #{i+1}", type=["csv"], key=f"file{i}")
+        if src != "—" and file is not None:
+            uploads.append((src, file))
+
+with st.expander("Required / Typical Columns by Source"):
     st.markdown("""
-- **NIST**: NIST SP 800-53 Rev 5
-- **PCI DSS**: Payment Card Industry Data Security Standard v4.0
-- **ISO 27001**: International Standard for Information Security
-- **CIS**: Center for Internet Security Controls v8
+- **Salesforce:** `Username, Email, Profile, UserRole, IsMFAEnabled, LastLoginDate, ManagerId`  
+- **AWS IAM (Credential Report):** `user, mfa_active, password_last_changed, access_key_1_last_rotated, group_list, password_last_used`  
+- **Azure Entra ID:** `User principal name, Roles, MFA State, Last sign-in date, Manager`  
+- **Generic CSV (any app):** `username, email, role, is_admin, mfa_enabled, last_login, creds_last_rotated, has_manager`
 """)
 
-# --- Footer ---
+if not uploads:
+    st.info("Upload at least one CSV to continue.")
+    st.stop()
+
+normalized_frames = []
+for src, file in uploads:
+    df_raw = pd.read_csv(file)
+    norm = NORMALIZERS[src](df_raw)
+    norm["source"] = src
+    normalized_frames.append(norm)
+
+data = pd.concat(normalized_frames, ignore_index=True).fillna({"mfa_enabled": False, "has_manager": True})
+findings = expand_findings(data)
+
+# ---- Summary metrics
 st.markdown("---")
-st.caption("Built with ❤️ by Tanny — Secure Infra AI Capstone | July 2025")
+st.header("📊 Posture Summary")
+
+total_accts = findings["username"].nunique()
+high = findings.query("severity == 'High'")["username"].nunique()
+medium = findings.query("severity == 'Medium'")["username"].nunique()
+
+m1, m2, m3 = st.columns(3)
+m1.metric("Accounts analyzed", total_accts)
+m2.metric("Accounts with High-risk findings", high)
+m3.metric("Accounts with Medium-risk findings", medium)
+
+# ---- Findings table
+st.markdown("### 🔎 Findings mapped to frameworks")
+def _color_sev(val):
+    return f"background-color: {'#ff4d4d' if val=='High' else '#ffa64d' if val=='Medium' else '#85e085'}"
+
+styled = findings.rename(columns={
+    "username":"Username","email":"Email","role":"Role","is_admin":"Is Admin",
+    "mfa_enabled":"MFA Enabled","last_login":"Last Login","creds_last_rotated":"Creds Rotated",
+    "has_manager":"Has Manager","severity":"Severity","finding":"Finding",
+    "nist":"NIST 800-53","iso":"ISO 27001","pci":"PCI DSS","soc2":"SOC 2","source":"Source"
+})
+
+st.dataframe(styled.style.applymap(_color_sev, subset=["Severity"]), use_container_width=True, height=420)
+
+# ---- Download evidence
+csv = findings.to_csv(index=False).encode("utf-8")
+st.download_button("⬇️ Export Findings CSV (evidence)", csv, file_name="auditguard_findings.csv", mime="text/csv")
+
+# ---- Notes / legend
+with st.expander("🗂️ Framework Legend"):
+    st.markdown("""
+- **NIST 800-53 Rev.5** (e.g., AC-2, AC-6, IA-2, IA-5)  
+- **ISO/IEC 27001:2022** (Annex A, e.g., A.9.x)  
+- **PCI DSS v4.0** (Req. 7–8 user access & auth)  
+- **SOC 2** (Common Criteria CC6.x)
+""")
+
+st.markdown("---")
+st.caption("Built by Tanny • AuditGuard prototype (IAM focus) • No AI, no infra checks — strictly identity & access readiness")
