@@ -293,4 +293,4 @@ with st.expander("🗂️ Framework Legend"):
 """)
 
 st.markdown("---")
-st.caption("Built by Tanny • AuditGuard prototype (IAM identity & access readiness MSc capstone project")
+st.caption("Built by Tanny • AuditGuard prototype (IAM identity & access readiness MSc capstone project)")
