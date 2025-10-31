@@ -265,6 +265,89 @@ m1.metric("Accounts analyzed", total_accts)
 m2.metric("Accounts with High-risk findings", high)
 m3.metric("Accounts with Medium-risk findings", medium)
 
+# ================== NEW: Framework filter + Grouped summary (drop-in) ==================
+# Place this block ABOVE your "Findings table" section.
+
+# Raw framework columns in your 'findings' dataframe
+_FW_RAW = {"NIST 800-53": "nist", "ISO 27001": "iso", "PCI DSS": "pci", "SOC 2": "soc2"}
+_BASE_COLS = [
+    "source", "finding_code", "finding", "severity",
+    "username", "last_login", "creds_last_rotated", "has_manager"
+]
+
+st.subheader("🧭 Findings — filters & summary")
+
+# 1) Framework column toggle
+chosen_fw_labels = st.multiselect(
+    "Filter by framework (affects the summary and filtered detail below)",
+    options=list(_FW_RAW.keys()),
+    default=list(_FW_RAW.keys()),
+)
+chosen_fw_raw = [_FW_RAW[k] for k in chosen_fw_labels] if chosen_fw_labels else []
+
+# 2) Build a filtered detail view (only rows that have ANY mapping in selected frameworks)
+if chosen_fw_raw:
+    _mask_has_mapping = findings[chosen_fw_raw].apply(
+        lambda r: any(bool(str(x).strip()) for x in r), axis=1
+    )
+    filtered_df = findings.loc[_mask_has_mapping].copy()
+else:
+    # If nothing selected, show all (summary still useful)
+    filtered_df = findings.copy()
+
+# 3) Grouped summary by finding type (counts, sources, and mapped controls)
+_group_cols = ["finding_code", "finding", "severity"]
+# Pick only present cols to avoid KeyErrors
+_present_fw_raw = [c for c in _FW_RAW.values() if c in filtered_df.columns]
+
+def _join_uniq(series: pd.Series) -> str:
+    vals = [str(x).strip() for x in series if str(x).strip()]
+    return ", ".join(sorted(set(vals)))
+
+grouped = (
+    filtered_df.groupby(_group_cols, dropna=False)
+    .agg({
+        "username": "nunique",                    # unique impacted users
+        "source": _join_uniq,                     # which sources
+        **{c: _join_uniq for c in _present_fw_raw}# framework mappings
+    })
+    .rename(columns={"username": "Impacted Users", "source": "Sources"})
+    .reset_index()
+    .sort_values(["severity", "Impacted Users"], ascending=[True, False])
+)
+
+# 4) Show in tabs: summary vs. filtered detail (keeps your original full table below intact)
+tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
+
+with tab_sum:
+    st.caption("One row per finding type — how many users, which sources, and which controls apply.")
+    # Rename framework columns to pretty labels for display
+    _disp_cols = ["finding_code", "finding", "severity", "Impacted Users", "Sources"] + _present_fw_raw
+    pretty_grouped = grouped.rename(columns={v: k for k, v in _FW_RAW.items() if v in _present_fw_raw})
+    st.dataframe(pretty_grouped[_disp_cols].rename(columns={
+        "finding_code": "Finding Code",
+        "finding": "Finding",
+        "severity": "Severity"
+    }), use_container_width=True, hide_index=True)
+
+with tab_filt:
+    st.caption("Detail rows restricted to findings mapped in the selected framework(s).")
+    # Show only base cols + the selected framework columns for clarity
+    _detail_cols = [c for c in _BASE_COLS if c in filtered_df.columns] + chosen_fw_raw
+    pretty_detail = filtered_df[_detail_cols].rename(columns={
+        "source": "Source",
+        "finding_code": "Finding Code",
+        "finding": "Finding",
+        "severity": "Severity",
+        "username": "Username",
+        "last_login": "Last Login",
+        "creds_last_rotated": "Creds Rotated",
+        "has_manager": "Has Manager",
+        **{v: k for k, v in _FW_RAW.items()}
+    })
+    st.dataframe(pretty_detail, use_container_width=True, hide_index=True)
+# ================== /NEW =================================================================
+
 # ---- Findings table
 st.markdown("### 🔎 Findings mapped to frameworks")
 def _color_sev(val):
