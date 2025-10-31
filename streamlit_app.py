@@ -296,28 +296,68 @@ else:
     filtered_df = findings.copy()
 
 # 3) Grouped summary by finding type (counts, sources, and mapped controls)
-_group_cols = ["finding_code", "finding", "severity"]
-# Pick only present cols to avoid KeyErrors
-_present_fw_raw = [c for c in _FW_RAW.values() if c in filtered_df.columns]
+# ------------------ CLEAN GROUPING PATCH ------------------
+import re
 
+# Pick the correct username column (raw vs pretty)
+USER_COL = "username" if "username" in filtered_df.columns else ("Username" if "Username" in filtered_df.columns else None)
+
+# 0) Create a stable "finding type" that removes per-row numbers like "Inactive for 125 days"
+def _normalize_msg(s: str) -> str:
+    # replace any number with N (e.g., "Inactive for 125 days" -> "Inactive for N days")
+    return re.sub(r"\d+", "N", str(s))
+
+filtered_df["Finding Type"] = filtered_df["finding"].apply(_normalize_msg)
+
+# 1) Choose grouping keys: use finding_code + normalized message + severity
+_group_cols = ["finding_code", "Finding Type", "severity"]
+
+# 2) Aggregate: count unique users, list sources, and join framework mappings
 def _join_uniq(series: pd.Series) -> str:
     vals = [str(x).strip() for x in series if str(x).strip()]
     return ", ".join(sorted(set(vals)))
 
+_present_fw_raw = [c for c in _FW_RAW.values() if c in filtered_df.columns]
+
+agg_dict = {
+    "source": _join_uniq,  # which sources
+    **{c: _join_uniq for c in _present_fw_raw}  # framework mappings
+}
+if USER_COL:
+    agg_dict[USER_COL] = "nunique"
+
 grouped = (
     filtered_df.groupby(_group_cols, dropna=False)
-    .agg({
-        "username": "nunique",                    # unique impacted users
-        "source": _join_uniq,                     # which sources
-        **{c: _join_uniq for c in _present_fw_raw}# framework mappings
-    })
-    .rename(columns={"username": "Impacted Users", "source": "Sources"})
+    .agg(agg_dict)
     .reset_index()
-    .sort_values(["severity", "Impacted Users"], ascending=[True, False])
+    .rename(columns={
+        "finding_code": "Finding Code",
+        "severity": "Severity",
+        "source": "Sources",
+        USER_COL: "Impacted Users" if USER_COL else "Impacted Users"
+    })
 )
 
-# 4) Show in tabs: summary vs. filtered detail (keeps your original full table below intact)
-tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
+# 3) Pretty-rename framework columns to display labels (nist->NIST..., etc.)
+grouped = grouped.rename(columns={v: k for k, v in _FW_RAW.items() if v in grouped.columns})
+
+# 4) Sort for readability
+sort_cols = ["Severity"]
+if "Impacted Users" in grouped.columns:
+    sort_cols.append("Impacted Users")
+grouped = grouped.sort_values(sort_cols, ascending=[True, False])
+
+# 5) TAB 1: show grouped summary with safe column selection
+with tab_sum:
+    st.caption("One row per finding type — how many users, which sources, and which controls apply.")
+    desired_fw_cols = [label for label in _FW_RAW.keys() if label in grouped.columns]
+    show_cols = ["Finding Code", "Finding Type", "Severity"]
+    if "Impacted Users" in grouped.columns: show_cols.append("Impacted Users")
+    if "Sources" in grouped.columns: show_cols.append("Sources")
+    show_cols += desired_fw_cols
+    show_cols = [c for c in show_cols if c in grouped.columns]
+    st.dataframe(grouped[show_cols], use_container_width=True, hide_index=True)
+# ------------------ /CLEAN GROUPING PATCH ------------------
 
 with tab_sum:
     st.caption("One row per finding type — how many users, which sources, and which controls apply.")
