@@ -348,6 +348,8 @@ if "Impacted Users" in grouped.columns:
 grouped = grouped.sort_values(sort_cols, ascending=[True, False])
 
 # 5) TAB 1: show grouped summary with safe column selection
+# Create the tabs before using them
+tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
 with tab_sum:
     st.caption("One row per finding type — how many users, which sources, and which controls apply.")
     desired_fw_cols = [label for label in _FW_RAW.keys() if label in grouped.columns]
