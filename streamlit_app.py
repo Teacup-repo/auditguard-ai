@@ -322,30 +322,35 @@ tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
 with tab_sum:
     st.caption("One row per finding type — how many users, which sources, and which controls apply.")
 
-    # Rename framework columns to pretty labels for display
+    # 1) Pretty-rename framework columns present in the grouped frame
+    #    (raw -> display labels)
     pretty_grouped = grouped.rename(
-        columns={v: k for k, v in _FW_RAW.items() if v in _present_fw_raw}
+        columns={v: k for k, v in _FW_RAW.items() if v in grouped.columns}
     )
 
-    # Build display columns *after* the rename so names exist
-    _disp_fw_cols = [k for k, v in _FW_RAW.items() if v in _present_fw_raw]
-    _disp_cols = ["finding_code", "finding", "severity", "Impacted Users", "Sources"] + _disp_fw_cols
-
-    # Only keep columns that actually exist (guards against empty or missing mappings)
-    _disp_cols = [c for c in _disp_cols if c in pretty_grouped.columns]
-
-    # Friendly headings
+    # 2) Also pretty-rename base columns
     pretty_grouped = pretty_grouped.rename(columns={
         "finding_code": "Finding Code",
         "finding": "Finding",
-        "severity": "Severity"
+        "severity": "Severity",
+        "source": "Sources",            # if present for any reason
+        "username": "Impacted Users"    # guard if agg rename didn’t catch
     })
 
-    st.dataframe(
-        pretty_grouped[_disp_cols],
-        use_container_width=True,
-        hide_index=True
-    )
+    # 3) Build desired display list *after* rename
+    desired_fw_cols = [label for label in _FW_RAW.keys() if label in pretty_grouped.columns]
+    desired_cols = ["Finding Code", "Finding", "Severity", "Impacted Users", "Sources"] + desired_fw_cols
+
+    # 4) Only keep columns that actually exist (prevents KeyError)
+    show_cols = [c for c in desired_cols if c in pretty_grouped.columns]
+
+    if not show_cols:
+        # Fallback: show whatever columns are available
+        st.info("No grouped columns found for the current selection. Showing available columns.")
+        st.dataframe(pretty_grouped, use_container_width=True, hide_index=True)
+    else:
+        st.dataframe(pretty_grouped[show_cols], use_container_width=True, hide_index=True)
+
 
 with tab_filt:
     st.caption("Detail rows restricted to findings mapped in the selected framework(s).")
