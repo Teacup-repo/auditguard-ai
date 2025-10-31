@@ -321,14 +321,31 @@ tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
 
 with tab_sum:
     st.caption("One row per finding type — how many users, which sources, and which controls apply.")
+
     # Rename framework columns to pretty labels for display
-    _disp_cols = ["finding_code", "finding", "severity", "Impacted Users", "Sources"] + _present_fw_raw
-    pretty_grouped = grouped.rename(columns={v: k for k, v in _FW_RAW.items() if v in _present_fw_raw})
-    st.dataframe(pretty_grouped[_disp_cols].rename(columns={
+    pretty_grouped = grouped.rename(
+        columns={v: k for k, v in _FW_RAW.items() if v in _present_fw_raw}
+    )
+
+    # Build display columns *after* the rename so names exist
+    _disp_fw_cols = [k for k, v in _FW_RAW.items() if v in _present_fw_raw]
+    _disp_cols = ["finding_code", "finding", "severity", "Impacted Users", "Sources"] + _disp_fw_cols
+
+    # Only keep columns that actually exist (guards against empty or missing mappings)
+    _disp_cols = [c for c in _disp_cols if c in pretty_grouped.columns]
+
+    # Friendly headings
+    pretty_grouped = pretty_grouped.rename(columns={
         "finding_code": "Finding Code",
         "finding": "Finding",
         "severity": "Severity"
-    }), use_container_width=True, hide_index=True)
+    })
+
+    st.dataframe(
+        pretty_grouped[_disp_cols],
+        use_container_width=True,
+        hide_index=True
+    )
 
 with tab_filt:
     st.caption("Detail rows restricted to findings mapped in the selected framework(s).")
