@@ -359,39 +359,6 @@ with tab_sum:
     st.dataframe(grouped[show_cols], use_container_width=True, hide_index=True)
 # ------------------ /CLEAN GROUPING PATCH ------------------
 
-with tab_sum:
-    st.caption("One row per finding type — how many users, which sources, and which controls apply.")
-
-    # 1) Pretty-rename framework columns present in the grouped frame
-    #    (raw -> display labels)
-    pretty_grouped = grouped.rename(
-        columns={v: k for k, v in _FW_RAW.items() if v in grouped.columns}
-    )
-
-    # 2) Also pretty-rename base columns
-    pretty_grouped = pretty_grouped.rename(columns={
-        "finding_code": "Finding Code",
-        "finding": "Finding",
-        "severity": "Severity",
-        "source": "Sources",            # if present for any reason
-        "username": "Impacted Users"    # guard if agg rename didn’t catch
-    })
-
-    # 3) Build desired display list *after* rename
-    desired_fw_cols = [label for label in _FW_RAW.keys() if label in pretty_grouped.columns]
-    desired_cols = ["Finding Code", "Finding", "Severity", "Impacted Users", "Sources"] + desired_fw_cols
-
-    # 4) Only keep columns that actually exist (prevents KeyError)
-    show_cols = [c for c in desired_cols if c in pretty_grouped.columns]
-
-    if not show_cols:
-        # Fallback: show whatever columns are available
-        st.info("No grouped columns found for the current selection. Showing available columns.")
-        st.dataframe(pretty_grouped, use_container_width=True, hide_index=True)
-    else:
-        st.dataframe(pretty_grouped[show_cols], use_container_width=True, hide_index=True)
-
-
 with tab_filt:
     st.caption("Detail rows restricted to findings mapped in the selected framework(s).")
     # Show only base cols + the selected framework columns for clarity
