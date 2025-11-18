@@ -1,6 +1,6 @@
-# AuditGuard – IAM Audit Readiness Dashboard (Enterprise Edition)
+# AuditGuard – IAM Audit Readiness (Enterprise Edition v2)
 # Author: Tanny Meevasana
-# Notes: Polished, enterprise-grade Streamlit app optimized for demo storytelling (Figma, presales)
+# Purpose: Enterprise-polished Streamlit app for presales and investor demos
 
 import re
 from datetime import datetime
@@ -17,36 +17,53 @@ st.set_page_config(
     menu_items={
         "Get Help": "mailto:tanny.meeva@gmail.com",
         "Report a bug": "mailto:tanny.meeva@gmail.com",
-        "About": "AuditGuard – IAM identity & access readiness demo (Streamlit)"
+        "About": "AuditGuard – IAM identity & access readiness (enterprise demo)"
     }
 )
 
-# ---- Minimal CSS polish for enterprise look
+# Minimal CSS for clean, neutral enterprise look
 st.markdown(
     """
     <style>
-      /* Tighten fonts and add subtle card styles */
-      .main {padding-top: 1rem;}
+      .main {padding-top: 0.5rem;}
+      .ag-brand {display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:10px;}
+      .ag-brand .left {display:flex; gap:10px; align-items:center;}
+      .ag-badge {padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,0.1); font-size:12px;}
       .stMetric {background: rgba(0,0,0,0.03); border-radius: 12px; padding: 12px;}
       .ag-card {border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.6);}
-      .ag-inline {display:flex; gap:12px; flex-wrap: wrap;}
+      .ag-muted {color:#666;}
+      .ag-note {font-size:12px; color:#666;}
+      .ag-hstack {display:flex; gap:10px; align-items:center;}
       .ag-pill {display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(0,0,0,0.12);}
       .ag-sev-High {background:#fff0f0;}
       .ag-sev-Medium {background:#fff7e6;}
       .ag-sev-Low {background:#f0fff4;}
-      .ag-muted {color:#666;}
-      .ag-hint {font-size:13px; color:#666;}
-      .block-container {padding-top: 1rem; padding-bottom: 2rem;}
-      .stTabs [data-baseweb="tab-list"] {gap: 8px;}
-      .stTabs [data-baseweb="tab"] {border-radius: 12px; padding: 8px 12px;}
       footer {visibility: hidden;}
+      /* Table density */
+      .compact-table table {font-size: 12px;}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-st.title("🛡️ AuditGuard – IAM Audit Readiness (Enterprise)")
-st.caption("Prototype for real-time IAM control visibility and framework mapping (NIST 800-53, ISO 27001, PCI DSS, SOC 2)")
+def brand_bar():
+    st.markdown(
+        """
+        <div class="ag-brand">
+          <div class="left">
+            <span style="font-size:20px">🛡️ <b>AuditGuard</b></span>
+            <span class="ag-badge">Enterprise Demo</span>
+          </div>
+          <div class="ag-note">IAM readiness • Framework mapping • Evidence export</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+brand_bar()
+
+st.subheader("IAM Audit Readiness")
+st.caption("Normalize IAM exports, classify identity risk, map to frameworks, and export evidence — built for presales, security leaders, and investors.")
 
 # --------------------------- Constants ---------------------------
 CONTROL_MAP: Dict[str, Dict[str, object]] = {
@@ -255,35 +272,51 @@ def expand_findings(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# --------------------------- Sidebar Nav ---------------------------
-st.sidebar.header("Navigation")
-page = st.sidebar.radio(
-    "Go to",
-    ["Overview", "Upload & Normalize", "Findings & Filters", "Framework Mapping", "Evidence & Export"],
-    index=0
-)
-st.sidebar.markdown("---")
-st.sidebar.subheader("Severity")
-sev_filter = st.sidebar.multiselect("Show severities", options=["High", "Medium", "Low"], default=["High","Medium","Low"])
-st.sidebar.subheader("Frameworks")
-fw_selected = st.sidebar.multiselect("Map to", options=list(FW_LABEL_TO_COL.keys()), default=list(FW_LABEL_TO_COL.keys()))
+# --------------------------- Sidebar: Settings ---------------------------
+st.sidebar.header("Settings")
+density = st.sidebar.select_slider("Table density", options=["Comfortable","Compact"], value="Comfortable")
+sev_filter = st.sidebar.multiselect("Show severities", options=["High","Medium","Low"], default=["High","Medium","Low"])
+fw_selected = st.sidebar.multiselect("Framework filter", options=list(FW_LABEL_TO_COL.keys()), default=list(FW_LABEL_TO_COL.keys()))
+source_filter = st.sidebar.multiselect("Source filter", options=["Salesforce","AWS IAM","Azure Entra ID","Generic CSV"], default=[])
 
-# --------------------------- Sample Data Help ---------------------------
-with st.expander("📎 Sample CSV formats (click to expand)"):
-    st.markdown("""
-**Salesforce:** `Username, Email, Profile, UserRole, IsMFAEnabled, LastLoginDate, ManagerId`  
-**AWS IAM (Credential Report):** `user, mfa_active, password_last_changed, access_key_1_last_rotated, group_list, password_last_used`  
-**Azure Entra ID:** `User principal name, Roles, MFA State, Last sign-in date, Manager`  
-**Generic CSV:** `username, email, role, is_admin, mfa_enabled, last_login, creds_last_rotated, has_manager`
-    """)
+st.sidebar.markdown("---")
+use_samples = st.sidebar.button("🔁 Load sample data (demo)")
 
 # --------------------------- Data Stage ---------------------------
+@st.cache_data(show_spinner=False)
+def load_samples() -> list:
+    from io import StringIO
+    salesforce = StringIO("""Username,Email,Profile,UserRole,IsMFAEnabled,LastLoginDate,ManagerId
+alice,alice@example.com,System Administrator,Admin,true,2025-10-01,123
+bob,bob@example.com,Standard User,User,false,2025-09-01,124
+carol,carol@example.com,Standard User,User,,2025-06-12,
+""")
+    aws = StringIO("""user,mfa_active,password_last_changed,access_key_1_last_rotated,group_list,password_last_used,user_creation_time
+root,false,2025-01-10,2025-04-01,Administrator,2025-05-01,2024-12-01
+dev1,false,2025-02-01,2025-02-10,Developers,2025-10-01,2024-07-01
+fin-admin,true,2025-06-01,2025-06-15,Finance-Admin,2025-08-20,2024-08-01
+""")
+    azure = StringIO("""User principal name,Roles,MFA State,Last sign-in date,Manager
+sue@example.com,Global Administrator,enabled,2025-11-01,manager@example.com
+lee@example.com,User,disabled,2025-08-01,
+kim@example.com,Privileged Role Administrator,enabled,2025-02-10,lead@example.com
+""")
+    return [("Salesforce", salesforce), ("AWS IAM", aws), ("Azure Entra ID", azure)]
+
 @st.cache_data(show_spinner=False)
 def _load_and_normalize(uploads: list) -> pd.DataFrame:
     frames = []
     for src, up in uploads:
-        df = pd.read_csv(up)
-        norm = NORMALIZERS[src](df)
+        try:
+            df = pd.read_csv(up)
+        except Exception:
+            st.warning(f"Could not read file for source {src}. Ensure CSV format is valid.")
+            continue
+        normalizer = NORMALIZERS.get(src)
+        if not normalizer:
+            st.warning(f"No normalizer for source: {src}")
+            continue
+        norm = normalizer(df)
         norm["source"] = src
         frames.append(norm)
     if not frames:
@@ -291,162 +324,168 @@ def _load_and_normalize(uploads: list) -> pd.DataFrame:
     data = pd.concat(frames, ignore_index=True).fillna({"mfa_enabled": False, "has_manager": True})
     return data
 
+# Uploaders
 uploads: list = []
-cols = st.columns(3) if page != "Overview" else st.columns(1)
-rng = 3 if page != "Overview" else 1
-for i in range(rng):
-    with cols[i % len(cols)]:
+cols = st.columns(3)
+for i in range(3):
+    with cols[i]:
         src = st.selectbox(f"Source #{i+1}", ["—", "Salesforce", "AWS IAM", "Azure Entra ID", "Generic CSV"], key=f"src{i}")
         file = st.file_uploader(f"Upload CSV #{i+1}", type=["csv"], key=f"file{i}")
         if src != "—" and file is not None:
             uploads.append((src, file))
 
+if use_samples and not uploads:
+    uploads = load_samples()
+
 data = _load_and_normalize(uploads) if uploads else pd.DataFrame()
+if not data.empty and source_filter:
+    data = data[data["source"].isin(source_filter)].copy()
+
 findings = expand_findings(data) if not data.empty else pd.DataFrame()
 
-# --------------------------- Pages ---------------------------
-def page_overview():
-    st.subheader("Why AuditGuard?")
+# --------------------------- Overview Cards ---------------------------
+with st.container():
+    c1, c2, c3, c4 = st.columns(4)
+    if findings.empty:
+        c1.metric("Accounts analyzed", 0)
+        c2.metric("High (unique users)", 0)
+        c3.metric("Medium (unique users)", 0)
+        c4.metric("Low (unique users)", 0)
+    else:
+        total_accts = findings["username"].nunique()
+        high = findings.query("severity == 'High'")["username"].nunique()
+        medium = findings.query("severity == 'Medium'")["username"].nunique()
+        low = findings.query("severity == 'Low'")["username"].nunique()
+        c1.metric("Accounts analyzed", total_accts)
+        c2.metric("High (unique users)", int(high))
+        c3.metric("Medium (unique users)", int(medium))
+        c4.metric("Low (unique users)", int(low))
+
+# --------------------------- Tabs ---------------------------
+tab_overview, tab_findings, tab_framework, tab_export = st.tabs(
+    ["Overview", "Findings & Filters", "Framework Mapping", "Evidence & Export"]
+)
+
+with tab_overview:
     st.markdown(
         """
-        - **One place to see IAM risk posture** across Salesforce, AWS IAM, Azure Entra, or any CSV source.
-        - **Story-first demo flow**: summary metrics → filters → framework mapping → exportable evidence.
-        - **Enterprise-ready**: identity & access checks, framework mapping (NIST/ISO/PCI/SOC2), CSV export.
+        **Demo narrative**
+        1) Upload exports → 2) Normalize users → 3) Classify risks → 4) Filter & map to frameworks → 5) Export evidence.
         """
     )
-    st.markdown("#### What you can demo")
-    cols = st.columns(3)
-    with cols[0]:
-        st.markdown('<div class="ag-card"><b>Normalize</b><br/><span class="ag-muted">Ingest heterogeneous IAM exports and unify fields.</span></div>', unsafe_allow_html=True)
-    with cols[1]:
-        st.markdown('<div class="ag-card"><b>Classify risk</b><br/><span class="ag-muted">MFA gaps, inactivity, rotation, owners & roles.</span></div>', unsafe_allow_html=True)
-    with cols[2]:
-        st.markdown('<div class="ag-card"><b>Map to frameworks</b><br/><span class="ag-muted">NIST, ISO 27001, PCI DSS, SOC 2 controls.</span></div>', unsafe_allow_html=True)
-    st.info("Use the sidebar to navigate. Upload sample CSVs to see the end-to-end story.")
-
-def page_upload():
-    st.subheader("📥 Upload & Normalize")
+    st.markdown('<div class="ag-card ag-muted">Use the sidebar to switch density, frameworks, severities, and sources. Click “Load sample data” to populate a full story instantly.</div>', unsafe_allow_html=True)
     if data.empty:
-        st.warning("Upload at least one CSV to continue.")
-        return
-    st.success(f"Loaded **{len(data)}** rows from **{data['source'].nunique()}** source(s).")
-    st.dataframe(data, use_container_width=True, hide_index=True)
+        st.info("Upload CSVs (or click “Load sample data”) to begin.")
+    else:
+        st.success(f"Loaded **{len(data)}** rows from **{data['source'].nunique()}** source(s).")
+        st.dataframe(data, use_container_width=True, hide_index=True)
 
-def page_findings():
-    st.subheader("📊 Posture Summary")
+with tab_findings:
     if findings.empty:
-        st.info("No findings yet. Upload IAM exports above.")
-        return
+        st.info("No findings yet. Upload data or use sample data.")
+    else:
+        # Apply severity filter
+        df_show = findings[findings["severity"].isin(sev_filter)].copy() if sev_filter else findings.copy()
 
-    # KPI metrics
-    total_accts = findings["username"].nunique()
-    high = findings.query("severity == 'High'")["username"].nunique()
-    medium = findings.query("severity == 'Medium'")["username"].nunique()
-    low = findings.query("severity == 'Low'")["username"].nunique()
+        import matplotlib.pyplot as plt
+        counts = df_show["severity"].value_counts().reindex(["High","Medium","Low"]).fillna(0)
+        fig, ax = plt.subplots()
+        ax.bar(counts.index.astype(str), counts.values)
+        ax.set_title("Findings by Severity")
+        ax.set_xlabel("Severity")
+        ax.set_ylabel("Count")
+        st.pyplot(fig)
 
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Accounts analyzed", total_accts)
-    m2.metric("High (unique users)", high)
-    m3.metric("Medium (unique users)", medium)
-    m4.metric("Low (unique users)", low)
+        # Table
+        pretty = df_show.rename(columns={
+            "username":"Username","email":"Email","role":"Role","is_admin":"Is Admin",
+            "mfa_enabled":"MFA Enabled","last_login":"Last Login","creds_last_rotated":"Creds Rotated",
+            "has_manager":"Has Manager","severity":"Severity","finding":"Finding",
+            "nist":"NIST 800-53","iso":"ISO 27001","pci":"PCI DSS","soc2":"SOC 2","source":"Source"
+        })
+        if density == "Compact":
+            st.markdown('<div class="compact-table">', unsafe_allow_html=True)
+        st.dataframe(pretty, use_container_width=True, hide_index=True, height=420)
+        if density == "Compact":
+            st.markdown('</div>', unsafe_allow_html=True)
 
-    # Severity filter
-    df_show = findings[findings["severity"].isin(sev_filter)].copy() if sev_filter else findings.copy()
-
-    # Simple matplotlib bar chart (one plot, no explicit colors)
-    import matplotlib.pyplot as plt
-    counts = df_show["severity"].value_counts().reindex(["High","Medium","Low"]).fillna(0)
-    fig, ax = plt.subplots()
-    ax.bar(counts.index.astype(str), counts.values)
-    ax.set_title("Findings by Severity")
-    ax.set_xlabel("Severity")
-    ax.set_ylabel("Count")
-    st.pyplot(fig)
-
-    st.markdown("#### Findings (filtered)")
-    pretty = df_show.rename(columns={
-        "username":"Username","email":"Email","role":"Role","is_admin":"Is Admin",
-        "mfa_enabled":"MFA Enabled","last_login":"Last Login","creds_last_rotated":"Creds Rotated",
-        "has_manager":"Has Manager","severity":"Severity","finding":"Finding",
-        "nist":"NIST 800-53","iso":"ISO 27001","pci":"PCI DSS","soc2":"SOC 2","source":"Source"
-    })
-    st.dataframe(pretty, use_container_width=True, hide_index=True, height=420)
-
-def page_framework_mapping():
-    st.subheader("🧭 Framework Mapping & Grouped Summary")
+with tab_framework:
     if findings.empty:
         st.info("Upload data to see mappings.")
-        return
-
-    # 1) Framework filter
-    chosen_fw_raw = [FW_LABEL_TO_COL[k] for k in fw_selected] if fw_selected else []
-
-    # 2) Filter to rows that have ANY mapping in selected frameworks
-    if chosen_fw_raw:
-        mask = findings[chosen_fw_raw].apply(lambda r: any(bool(str(x).strip()) for x in r), axis=1)
-        filtered_df = findings.loc[mask].copy()
     else:
-        filtered_df = findings.copy()
+        # Framework filter builds a filtered view
+        chosen_fw_raw = [FW_LABEL_TO_COL[k] for k in fw_selected] if fw_selected else []
+        if chosen_fw_raw:
+            mask = findings[chosen_fw_raw].apply(lambda r: any(bool(str(x).strip()) for x in r), axis=1)
+            filtered_df = findings.loc[mask].copy()
+        else:
+            filtered_df = findings.copy()
 
-    # 3) Normalize "Finding Type" (remove numeric parts)
-    def _normalize_msg(s: str) -> str:
-        return re.sub(r"\\d+", "N", str(s))
+        # Normalize "Finding Type" (remove numeric parts)
+        def _normalize_msg(s: str) -> str:
+            return re.sub(r"\d+", "N", str(s))
 
-    filtered_df["Finding Type"] = filtered_df["finding"].apply(_normalize_msg)
+        filtered_df["Finding Type"] = filtered_df["finding"].apply(_normalize_msg)
 
-    # 4) Group
-    group_cols = ["finding_code", "Finding Type", "severity"]
-    def _join_uniq(series: pd.Series) -> str:
-        vals = [str(x).strip() for x in series if str(x).strip()]
-        return ", ".join(sorted(set(vals)))
+        # Group
+        group_cols = ["finding_code", "Finding Type", "severity"]
+        def _join_uniq(series: pd.Series) -> str:
+            vals = [str(x).strip() for x in series if str(x).strip()]
+            return ", ".join(sorted(set(vals)))
 
-    present_fw_cols = [c for c in FW_LABEL_TO_COL.values() if c in filtered_df.columns]
-    agg_dict = {"source": _join_uniq, **{c: _join_uniq for c in present_fw_cols}, "username": "nunique"}
+        present_fw_cols = [c for c in FW_LABEL_TO_COL.values() if c in filtered_df.columns]
+        agg_dict = {"source": _join_uniq, **{c: _join_uniq for c in present_fw_cols}, "username": "nunique"}
 
-    grouped = (
-        filtered_df.groupby(group_cols, dropna=False).agg(agg_dict).reset_index()
-        .rename(columns={
-            "finding_code":"Finding Code",
-            "severity":"Severity",
-            "source":"Sources",
-            "username":"Impacted Users",
-            **{v:k for k,v in FW_LABEL_TO_COL.items() if v in present_fw_cols}
-        })
-    )
+        grouped = (
+            filtered_df.groupby(group_cols, dropna=False).agg(agg_dict).reset_index()
+            .rename(columns={
+                "finding_code":"Finding Code",
+                "severity":"Severity",
+                "source":"Sources",
+                "username":"Impacted Users",
+                **{v:k for k,v in FW_LABEL_TO_COL.items() if v in present_fw_cols}
+            })
+        )
 
-    # Sort and present
-    sort_cols = ["Severity", "Impacted Users"] if "Impacted Users" in grouped.columns else ["Severity"]
-    grouped = grouped.sort_values(sort_cols, ascending=[True, False])
-    st.dataframe(grouped, use_container_width=True, hide_index=True)
+        sort_cols = ["Severity", "Impacted Users"] if "Impacted Users" in grouped.columns else ["Severity"]
+        grouped = grouped.sort_values(sort_cols, ascending=[True, False])
+        st.dataframe(grouped, use_container_width=True, hide_index=True)
 
-    st.caption("One row per finding type with impacted users, sources, and mapped controls.")
-
-def page_evidence_export():
-    st.subheader("📄 Evidence & Export")
+with tab_export:
     if findings.empty:
-        st.info("Upload data to generate evidence.")
-        return
-    csv = findings.to_csv(index=False).encode("utf-8")
-    st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+        st.info("Upload data to generate export.")
+    else:
+        # Executive summary
+        total = findings["username"].nunique()
+        high = findings.query("severity == 'High'")["username"].nunique()
+        med = findings.query("severity == 'Medium'")["username"].nunique()
+        low = findings.query("severity == 'Low'")["username"].nunique()
+        summary = f"""# AuditGuard – Executive Summary
 
-    with st.expander("🗂️ Framework Legend"):
-        st.markdown("""
+- **Accounts analyzed:** {total}
+- **High-risk users:** {int(high)}
+- **Medium-risk users:** {int(med)}
+- **Low-risk users:** {int(low)}
+
+**What this means:** Immediate focus on MFA for admins, credential rotation >90 days, and orphaned accounts. AuditGuard maps these to NIST, ISO 27001, PCI DSS, and SOC 2 to support evidence and remediation plans.
+
+*Generated by AuditGuard demo.*
+"""
+        st.markdown("#### Executive Summary (Markdown)")
+        st.code(summary, language="markdown")
+        st.download_button("⬇️ Download Executive Summary (.md)", summary.encode("utf-8"), file_name="AuditGuard_Executive_Summary.md", mime="text/markdown")
+
+        # Findings CSV export
+        csv = findings.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+
+        with st.expander("🗂️ Framework Legend"):
+            st.markdown("""
 - **NIST 800-53 Rev.5** (e.g., AC-2, AC-6, IA-2, IA-5)  
 - **ISO/IEC 27001:2022** (Annex A, e.g., A.9.x)  
 - **PCI DSS v4.0** (Req. 7–8 user access & auth)  
 - **SOC 2** (Common Criteria CC6.x)
-        """)
+            """)
 
-    st.markdown('<div class="ag-card ag-muted">Built by Tanny • AuditGuard prototype (IAM identity & access readiness)</div>', unsafe_allow_html=True)
-
-# --------------------------- Router ---------------------------
-if page == "Overview":
-    page_overview()
-elif page == "Upload & Normalize":
-    page_upload()
-elif page == "Findings & Filters":
-    page_findings()
-elif page == "Framework Mapping":
-    page_framework_mapping()
-elif page == "Evidence & Export":
-    page_evidence_export()
+# Footer note
+st.markdown('<div class="ag-note">Built by Tanny • AuditGuard (enterprise demo)</div>', unsafe_allow_html=True)
