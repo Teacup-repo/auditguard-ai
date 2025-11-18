@@ -1,24 +1,62 @@
-# streamlit_app.py  — AuditGuard (IAM Audit Readiness Dashboard)
-import streamlit as st
-import pandas as pd
-from io import StringIO
+# AuditGuard – IAM Audit Readiness Dashboard (Enterprise Edition)
+# Author: Tanny Meevasana
+# Notes: Polished, enterprise-grade Streamlit app optimized for demo storytelling (Figma, presales)
+
+import re
 from datetime import datetime
-from typing import List, Dict, Tuple
+from typing import List, Tuple, Dict
 
-st.set_page_config(page_title="AuditGuard – IAM Audit Readiness", page_icon="🛡️", layout="wide")
-st.title("🛡️ AuditGuard – IAM Audit Readiness Dashboard")
-st.caption("Prototype for real-time IAM control visibility and framework mapping (NIST, ISO 27001, PCI DSS, SOC 2)")
+import pandas as pd
+import streamlit as st
 
-# ------------- Helpers: Control mappings & risk logic -----------------
+# --------------------------- Page / Theming ---------------------------
+st.set_page_config(
+    page_title="AuditGuard – IAM Audit Readiness (Enterprise)",
+    page_icon="🛡️",
+    layout="wide",
+    menu_items={
+        "Get Help": "mailto:tanny.meeva@gmail.com",
+        "Report a bug": "mailto:tanny.meeva@gmail.com",
+        "About": "AuditGuard – IAM identity & access readiness demo (Streamlit)"
+    }
+)
 
-CONTROL_MAP = {
+# ---- Minimal CSS polish for enterprise look
+st.markdown(
+    """
+    <style>
+      /* Tighten fonts and add subtle card styles */
+      .main {padding-top: 1rem;}
+      .stMetric {background: rgba(0,0,0,0.03); border-radius: 12px; padding: 12px;}
+      .ag-card {border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.6);}
+      .ag-inline {display:flex; gap:12px; flex-wrap: wrap;}
+      .ag-pill {display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(0,0,0,0.12);}
+      .ag-sev-High {background:#fff0f0;}
+      .ag-sev-Medium {background:#fff7e6;}
+      .ag-sev-Low {background:#f0fff4;}
+      .ag-muted {color:#666;}
+      .ag-hint {font-size:13px; color:#666;}
+      .block-container {padding-top: 1rem; padding-bottom: 2rem;}
+      .stTabs [data-baseweb="tab-list"] {gap: 8px;}
+      .stTabs [data-baseweb="tab"] {border-radius: 12px; padding: 8px 12px;}
+      footer {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.title("🛡️ AuditGuard – IAM Audit Readiness (Enterprise)")
+st.caption("Prototype for real-time IAM control visibility and framework mapping (NIST 800-53, ISO 27001, PCI DSS, SOC 2)")
+
+# --------------------------- Constants ---------------------------
+CONTROL_MAP: Dict[str, Dict[str, object]] = {
     "MFA_DISABLED_ADMIN": {
         "description": "Admin account with MFA disabled",
         "nist": ["AC-2(1)", "IA-2(1)"],
         "iso": ["A.9.2.3", "A.9.4.2"],
         "pci": ["8.3.1", "8.4.2"],
         "soc2": ["CC6.1", "CC6.6"],
-        "severity": "High"
+        "severity": "High",
     },
     "NO_MFA_USER": {
         "description": "User without MFA enabled",
@@ -26,7 +64,7 @@ CONTROL_MAP = {
         "iso": ["A.9.4.2"],
         "pci": ["8.3.1"],
         "soc2": ["CC6.6"],
-        "severity": "Medium"
+        "severity": "Medium",
     },
     "INACTIVE_60": {
         "description": "User inactive > 60 days",
@@ -34,7 +72,7 @@ CONTROL_MAP = {
         "iso": ["A.9.2.6"],
         "pci": ["8.2.6"],
         "soc2": ["CC6.2"],
-        "severity": "Medium"
+        "severity": "Medium",
     },
     "STALE_CREDS_90": {
         "description": "Credentials not rotated > 90 days",
@@ -42,7 +80,7 @@ CONTROL_MAP = {
         "iso": ["A.9.2.4"],
         "pci": ["8.3.6"],
         "soc2": ["CC6.6"],
-        "severity": "High"
+        "severity": "High",
     },
     "ORPHANED_ACCOUNT": {
         "description": "Account without active owner/manager",
@@ -50,7 +88,7 @@ CONTROL_MAP = {
         "iso": ["A.9.2.1"],
         "pci": ["7.1.2"],
         "soc2": ["CC6.1"],
-        "severity": "High"
+        "severity": "High",
     },
     "EXCESSIVE_ROLE": {
         "description": "Elevated role not justified (non-admin in admin group)",
@@ -58,17 +96,33 @@ CONTROL_MAP = {
         "iso": ["A.9.1.2"],
         "pci": ["7.1.1"],
         "soc2": ["CC6.3"],
-        "severity": "Medium"
-    }
+        "severity": "Medium",
+    },
 }
 
+FW_LABEL_TO_COL = {"NIST 800-53": "nist", "ISO 27001": "iso", "PCI DSS": "pci", "SOC 2": "soc2"}
+BASE_DETAIL_COLS = [
+    "source",
+    "finding_code",
+    "finding",
+    "severity",
+    "username",
+    "last_login",
+    "creds_last_rotated",
+    "has_manager",
+]
+
+# --------------------------- Utilities ---------------------------
 def _parse_bool(v):
-    if pd.isna(v): return None
+    if pd.isna(v):
+        return None
     s = str(v).strip().lower()
-    return True if s in ("true","t","yes","y","1","enabled","active","on") else False if s in ("false","f","no","n","0","disabled","inactive","off") else None
+    if s in ("true","t","yes","y","1","enabled","active","on"): return True
+    if s in ("false","f","no","n","0","disabled","inactive","off"): return False
+    return None
 
 def _parse_date(v):
-    if pd.isna(v) or str(v).strip()=="":
+    if pd.isna(v) or str(v).strip() == "":
         return None
     for fmt in ("%Y-%m-%d","%Y/%m/%d","%m/%d/%Y","%d/%m/%Y","%Y-%m-%d %H:%M:%S"):
         try:
@@ -77,13 +131,8 @@ def _parse_date(v):
             continue
     return None
 
-# ------------- Normalizers: bring different CSVs to one schema --------
-# Target schema columns:
-# username, email, role, is_admin (bool), mfa_enabled (bool),
-# last_login (datetime or None), creds_last_rotated (datetime or None), has_manager (bool)
-
+# --------------------------- Normalizers ---------------------------
 def normalize_salesforce(df: pd.DataFrame) -> pd.DataFrame:
-    # Common Salesforce export columns: Username, Email, Profile, UserRole, IsActive, LastLoginDate, ManagerId
     return pd.DataFrame({
         "username": df.get("Username", df.get("UserName")),
         "email": df.get("Email"),
@@ -91,12 +140,11 @@ def normalize_salesforce(df: pd.DataFrame) -> pd.DataFrame:
         "is_admin": df.get("Profile", "").astype(str).str.contains("System Administrator", case=False, na=False),
         "mfa_enabled": df.get("IsMFAEnabled", df.get("MfaEnabled", False)).apply(_parse_bool),
         "last_login": df.get("LastLoginDate").apply(_parse_date),
-        "creds_last_rotated": None,  # not in typical SF user export
-        "has_manager": df.get("ManagerId").notna() if "ManagerId" in df.columns else True
+        "creds_last_rotated": None,
+        "has_manager": df.get("ManagerId").notna() if "ManagerId" in df.columns else True,
     })
 
 def normalize_aws_iam(df: pd.DataFrame) -> pd.DataFrame:
-    # AWS Credential Report columns (examples): user, password_enabled, mfa_active, password_last_changed, access_key_1_last_rotated, arn, user_creation_time, group_list
     last_rot = df.get("access_key_1_last_rotated", df.get("password_last_changed"))
     role_guess = df.get("group_list", "").astype(str)
     return pd.DataFrame({
@@ -107,11 +155,10 @@ def normalize_aws_iam(df: pd.DataFrame) -> pd.DataFrame:
         "mfa_enabled": df.get("mfa_active").apply(_parse_bool),
         "last_login": df.get("password_last_used", df.get("user_creation_time")).apply(_parse_date),
         "creds_last_rotated": last_rot.apply(_parse_date) if isinstance(last_rot, pd.Series) else None,
-        "has_manager": True  # IAM users typically not modeled with managers
+        "has_manager": True,
     })
 
 def normalize_azure_entra(df: pd.DataFrame) -> pd.DataFrame:
-    # Typical bulk export columns: User principal name, Display name, Last sign-in date, MFA State, Roles
     return pd.DataFrame({
         "username": df.get("User principal name", df.get("UserPrincipalName")),
         "email": df.get("User principal name", df.get("UserPrincipalName")),
@@ -120,11 +167,10 @@ def normalize_azure_entra(df: pd.DataFrame) -> pd.DataFrame:
         "mfa_enabled": df.get("MFA State", df.get("MFA")).apply(_parse_bool),
         "last_login": df.get("Last sign-in date", df.get("LastSignInDate")).apply(_parse_date),
         "creds_last_rotated": None,
-        "has_manager": df.get("Manager").notna() if "Manager" in df.columns else True
+        "has_manager": df.get("Manager").notna() if "Manager" in df.columns else True,
     })
 
 def normalize_generic(df: pd.DataFrame) -> pd.DataFrame:
-    # Expect columns close to the target schema; we best-effort map
     return pd.DataFrame({
         "username": df.get("username", df.get("user")),
         "email": df.get("email"),
@@ -133,35 +179,30 @@ def normalize_generic(df: pd.DataFrame) -> pd.DataFrame:
         "mfa_enabled": df.get("mfa_enabled", df.get("MFA")).apply(_parse_bool) if "mfa_enabled" in df.columns or "MFA" in df.columns else None,
         "last_login": df.get("last_login").apply(_parse_date) if "last_login" in df.columns else None,
         "creds_last_rotated": df.get("creds_last_rotated").apply(_parse_date) if "creds_last_rotated" in df.columns else None,
-        "has_manager": df.get("has_manager").apply(_parse_bool) if "has_manager" in df.columns else True
+        "has_manager": df.get("has_manager").apply(_parse_bool) if "has_manager" in df.columns else True,
     })
 
 NORMALIZERS = {
     "Salesforce": normalize_salesforce,
     "AWS IAM": normalize_aws_iam,
     "Azure Entra ID": normalize_azure_entra,
-    "Generic CSV": normalize_generic
+    "Generic CSV": normalize_generic,
 }
 
-# ---------------- Risk classification ----------------
-
+# --------------------------- Risk logic ---------------------------
 def classify_row(row) -> List[Tuple[str, str]]:
-    """Return list of (finding_code, reason) for the row."""
-    findings = []
-
+    findings: List[Tuple[str, str]] = []
     is_admin = bool(row.get("is_admin") or (row.get("role") and "admin" in str(row.get("role")).lower()))
     mfa = row.get("mfa_enabled")
     last_login = row.get("last_login")
     creds_rot = row.get("creds_last_rotated")
     has_manager = row.get("has_manager", True)
 
-    # MFA conditions
     if is_admin and (mfa is False or mfa is None):
         findings.append(("MFA_DISABLED_ADMIN", "Admin without MFA"))
     elif mfa is False:
         findings.append(("NO_MFA_USER", "User without MFA"))
 
-    # Inactivity
     if isinstance(last_login, datetime):
         days = (datetime.now() - last_login).days
         if days > 60:
@@ -169,17 +210,14 @@ def classify_row(row) -> List[Tuple[str, str]]:
     else:
         findings.append(("INACTIVE_60", "No last_login timestamp available"))
 
-    # Credential rotation
     if isinstance(creds_rot, datetime):
         days = (datetime.now() - creds_rot).days
         if days > 90:
             findings.append(("STALE_CREDS_90", f"Credentials last rotated {days} days ago"))
 
-    # Ownership / orphaned
     if has_manager is False:
         findings.append(("ORPHANED_ACCOUNT", "No active manager assigned"))
 
-    # Excessive role example
     role = str(row.get("role") or "")
     if ("finance" in role.lower() or "hr" in role.lower()) and is_admin:
         findings.append(("EXCESSIVE_ROLE", f"Elevated rights with business role: {role}"))
@@ -199,7 +237,7 @@ def expand_findings(df: pd.DataFrame) -> pd.DataFrame:
                 "nist": "",
                 "iso": "",
                 "pci": "",
-                "soc2": ""
+                "soc2": "",
             })
         else:
             for code, reason in issues:
@@ -212,199 +250,203 @@ def expand_findings(df: pd.DataFrame) -> pd.DataFrame:
                     "nist": ", ".join(meta["nist"]),
                     "iso": ", ".join(meta["iso"]),
                     "pci": ", ".join(meta["pci"]),
-                    "soc2": ", ".join(meta["soc2"])
+                    "soc2": ", ".join(meta["soc2"]),
                 })
     return pd.DataFrame(rows)
 
-# ----------------------------- UI ------------------------------------
 
-st.header("📥 Upload IAM Exports")
-st.write("Upload CSVs from **Salesforce**, **AWS IAM**, **Azure Entra ID**, or a **Generic CSV** and select the correct source so AuditGuard can normalize the fields.")
+# --------------------------- Sidebar Nav ---------------------------
+st.sidebar.header("Navigation")
+page = st.sidebar.radio(
+    "Go to",
+    ["Overview", "Upload & Normalize", "Findings & Filters", "Framework Mapping", "Evidence & Export"],
+    index=0
+)
+st.sidebar.markdown("---")
+st.sidebar.subheader("Severity")
+sev_filter = st.sidebar.multiselect("Show severities", options=["High", "Medium", "Low"], default=["High","Medium","Low"])
+st.sidebar.subheader("Frameworks")
+fw_selected = st.sidebar.multiselect("Map to", options=list(FW_LABEL_TO_COL.keys()), default=list(FW_LABEL_TO_COL.keys()))
 
-uploads = []
-cols = st.columns(3)
-for i in range(3):
-    with cols[i]:
+# --------------------------- Sample Data Help ---------------------------
+with st.expander("📎 Sample CSV formats (click to expand)"):
+    st.markdown("""
+**Salesforce:** `Username, Email, Profile, UserRole, IsMFAEnabled, LastLoginDate, ManagerId`  
+**AWS IAM (Credential Report):** `user, mfa_active, password_last_changed, access_key_1_last_rotated, group_list, password_last_used`  
+**Azure Entra ID:** `User principal name, Roles, MFA State, Last sign-in date, Manager`  
+**Generic CSV:** `username, email, role, is_admin, mfa_enabled, last_login, creds_last_rotated, has_manager`
+    """)
+
+# --------------------------- Data Stage ---------------------------
+@st.cache_data(show_spinner=False)
+def _load_and_normalize(uploads: list) -> pd.DataFrame:
+    frames = []
+    for src, up in uploads:
+        df = pd.read_csv(up)
+        norm = NORMALIZERS[src](df)
+        norm["source"] = src
+        frames.append(norm)
+    if not frames:
+        return pd.DataFrame()
+    data = pd.concat(frames, ignore_index=True).fillna({"mfa_enabled": False, "has_manager": True})
+    return data
+
+uploads: list = []
+cols = st.columns(3) if page != "Overview" else st.columns(1)
+rng = 3 if page != "Overview" else 1
+for i in range(rng):
+    with cols[i % len(cols)]:
         src = st.selectbox(f"Source #{i+1}", ["—", "Salesforce", "AWS IAM", "Azure Entra ID", "Generic CSV"], key=f"src{i}")
         file = st.file_uploader(f"Upload CSV #{i+1}", type=["csv"], key=f"file{i}")
         if src != "—" and file is not None:
             uploads.append((src, file))
 
-with st.expander("Required / Typical Columns by Source"):
-    st.markdown("""
-- **Salesforce:** `Username, Email, Profile, UserRole, IsMFAEnabled, LastLoginDate, ManagerId`  
-- **AWS IAM (Credential Report):** `user, mfa_active, password_last_changed, access_key_1_last_rotated, group_list, password_last_used`  
-- **Azure Entra ID:** `User principal name, Roles, MFA State, Last sign-in date, Manager`  
-- **Generic CSV (any app):** `username, email, role, is_admin, mfa_enabled, last_login, creds_last_rotated, has_manager`
-""")
+data = _load_and_normalize(uploads) if uploads else pd.DataFrame()
+findings = expand_findings(data) if not data.empty else pd.DataFrame()
 
-if not uploads:
-    st.info("Upload at least one CSV to continue.")
-    st.stop()
-
-normalized_frames = []
-for src, file in uploads:
-    df_raw = pd.read_csv(file)
-    norm = NORMALIZERS[src](df_raw)
-    norm["source"] = src
-    normalized_frames.append(norm)
-
-data = pd.concat(normalized_frames, ignore_index=True).fillna({"mfa_enabled": False, "has_manager": True})
-findings = expand_findings(data)
-
-# ---- Summary metrics
-st.markdown("---")
-st.header("📊 Posture Summary")
-
-total_accts = findings["username"].nunique()
-high = findings.query("severity == 'High'")["username"].nunique()
-medium = findings.query("severity == 'Medium'")["username"].nunique()
-
-m1, m2, m3 = st.columns(3)
-m1.metric("Accounts analyzed", total_accts)
-m2.metric("Accounts with High-risk findings", high)
-m3.metric("Accounts with Medium-risk findings", medium)
-
-# ================== NEW: Framework filter + Grouped summary (drop-in) ==================
-# Place this block ABOVE your "Findings table" section.
-
-# Raw framework columns in your 'findings' dataframe
-_FW_RAW = {"NIST 800-53": "nist", "ISO 27001": "iso", "PCI DSS": "pci", "SOC 2": "soc2"}
-_BASE_COLS = [
-    "source", "finding_code", "finding", "severity",
-    "username", "last_login", "creds_last_rotated", "has_manager"
-]
-
-st.subheader("🧭 Findings — filters & summary")
-
-# 1) Framework column toggle
-chosen_fw_labels = st.multiselect(
-    "Filter by framework (affects the summary and filtered detail below)",
-    options=list(_FW_RAW.keys()),
-    default=list(_FW_RAW.keys()),
-)
-chosen_fw_raw = [_FW_RAW[k] for k in chosen_fw_labels] if chosen_fw_labels else []
-
-# 2) Build a filtered detail view (only rows that have ANY mapping in selected frameworks)
-if chosen_fw_raw:
-    _mask_has_mapping = findings[chosen_fw_raw].apply(
-        lambda r: any(bool(str(x).strip()) for x in r), axis=1
+# --------------------------- Pages ---------------------------
+def page_overview():
+    st.subheader("Why AuditGuard?")
+    st.markdown(
+        """
+        - **One place to see IAM risk posture** across Salesforce, AWS IAM, Azure Entra, or any CSV source.
+        - **Story-first demo flow**: summary metrics → filters → framework mapping → exportable evidence.
+        - **Enterprise-ready**: identity & access checks, framework mapping (NIST/ISO/PCI/SOC2), CSV export.
+        """
     )
-    filtered_df = findings.loc[_mask_has_mapping].copy()
-else:
-    # If nothing selected, show all (summary still useful)
-    filtered_df = findings.copy()
+    st.markdown("#### What you can demo")
+    cols = st.columns(3)
+    with cols[0]:
+        st.markdown('<div class="ag-card"><b>Normalize</b><br/><span class="ag-muted">Ingest heterogeneous IAM exports and unify fields.</span></div>', unsafe_allow_html=True)
+    with cols[1]:
+        st.markdown('<div class="ag-card"><b>Classify risk</b><br/><span class="ag-muted">MFA gaps, inactivity, rotation, owners & roles.</span></div>', unsafe_allow_html=True)
+    with cols[2]:
+        st.markdown('<div class="ag-card"><b>Map to frameworks</b><br/><span class="ag-muted">NIST, ISO 27001, PCI DSS, SOC 2 controls.</span></div>', unsafe_allow_html=True)
+    st.info("Use the sidebar to navigate. Upload sample CSVs to see the end-to-end story.")
 
-# 3) Grouped summary by finding type (counts, sources, and mapped controls)
-# ------------------ CLEAN GROUPING PATCH ------------------
-import re
+def page_upload():
+    st.subheader("📥 Upload & Normalize")
+    if data.empty:
+        st.warning("Upload at least one CSV to continue.")
+        return
+    st.success(f"Loaded **{len(data)}** rows from **{data['source'].nunique()}** source(s).")
+    st.dataframe(data, use_container_width=True, hide_index=True)
 
-# Pick the correct username column (raw vs pretty)
-USER_COL = "username" if "username" in filtered_df.columns else ("Username" if "Username" in filtered_df.columns else None)
+def page_findings():
+    st.subheader("📊 Posture Summary")
+    if findings.empty:
+        st.info("No findings yet. Upload IAM exports above.")
+        return
 
-# 0) Create a stable "finding type" that removes per-row numbers like "Inactive for 125 days"
-def _normalize_msg(s: str) -> str:
-    # replace any number with N (e.g., "Inactive for 125 days" -> "Inactive for N days")
-    return re.sub(r"\d+", "N", str(s))
+    # KPI metrics
+    total_accts = findings["username"].nunique()
+    high = findings.query("severity == 'High'")["username"].nunique()
+    medium = findings.query("severity == 'Medium'")["username"].nunique()
+    low = findings.query("severity == 'Low'")["username"].nunique()
 
-filtered_df["Finding Type"] = filtered_df["finding"].apply(_normalize_msg)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Accounts analyzed", total_accts)
+    m2.metric("High (unique users)", high)
+    m3.metric("Medium (unique users)", medium)
+    m4.metric("Low (unique users)", low)
 
-# 1) Choose grouping keys: use finding_code + normalized message + severity
-_group_cols = ["finding_code", "Finding Type", "severity"]
+    # Severity filter
+    df_show = findings[findings["severity"].isin(sev_filter)].copy() if sev_filter else findings.copy()
 
-# 2) Aggregate: count unique users, list sources, and join framework mappings
-def _join_uniq(series: pd.Series) -> str:
-    vals = [str(x).strip() for x in series if str(x).strip()]
-    return ", ".join(sorted(set(vals)))
+    # Simple matplotlib bar chart (one plot, no explicit colors)
+    import matplotlib.pyplot as plt
+    counts = df_show["severity"].value_counts().reindex(["High","Medium","Low"]).fillna(0)
+    fig, ax = plt.subplots()
+    ax.bar(counts.index.astype(str), counts.values)
+    ax.set_title("Findings by Severity")
+    ax.set_xlabel("Severity")
+    ax.set_ylabel("Count")
+    st.pyplot(fig)
 
-_present_fw_raw = [c for c in _FW_RAW.values() if c in filtered_df.columns]
-
-agg_dict = {
-    "source": _join_uniq,  # which sources
-    **{c: _join_uniq for c in _present_fw_raw}  # framework mappings
-}
-if USER_COL:
-    agg_dict[USER_COL] = "nunique"
-
-grouped = (
-    filtered_df.groupby(_group_cols, dropna=False)
-    .agg(agg_dict)
-    .reset_index()
-    .rename(columns={
-        "finding_code": "Finding Code",
-        "severity": "Severity",
-        "source": "Sources",
-        USER_COL: "Impacted Users" if USER_COL else "Impacted Users"
+    st.markdown("#### Findings (filtered)")
+    pretty = df_show.rename(columns={
+        "username":"Username","email":"Email","role":"Role","is_admin":"Is Admin",
+        "mfa_enabled":"MFA Enabled","last_login":"Last Login","creds_last_rotated":"Creds Rotated",
+        "has_manager":"Has Manager","severity":"Severity","finding":"Finding",
+        "nist":"NIST 800-53","iso":"ISO 27001","pci":"PCI DSS","soc2":"SOC 2","source":"Source"
     })
-)
+    st.dataframe(pretty, use_container_width=True, hide_index=True, height=420)
 
-# 3) Pretty-rename framework columns to display labels (nist->NIST..., etc.)
-grouped = grouped.rename(columns={v: k for k, v in _FW_RAW.items() if v in grouped.columns})
+def page_framework_mapping():
+    st.subheader("🧭 Framework Mapping & Grouped Summary")
+    if findings.empty:
+        st.info("Upload data to see mappings.")
+        return
 
-# 4) Sort for readability
-sort_cols = ["Severity"]
-if "Impacted Users" in grouped.columns:
-    sort_cols.append("Impacted Users")
-grouped = grouped.sort_values(sort_cols, ascending=[True, False])
+    # 1) Framework filter
+    chosen_fw_raw = [FW_LABEL_TO_COL[k] for k in fw_selected] if fw_selected else []
 
-# 5) TAB 1: show grouped summary with safe column selection
-# Create the tabs before using them
-tab_sum, tab_filt = st.tabs(["📊 Grouped by finding", "📄 Filtered rows"])
-with tab_sum:
-    st.caption("One row per finding type — how many users, which sources, and which controls apply.")
-    desired_fw_cols = [label for label in _FW_RAW.keys() if label in grouped.columns]
-    show_cols = ["Finding Code", "Finding Type", "Severity"]
-    if "Impacted Users" in grouped.columns: show_cols.append("Impacted Users")
-    if "Sources" in grouped.columns: show_cols.append("Sources")
-    show_cols += desired_fw_cols
-    show_cols = [c for c in show_cols if c in grouped.columns]
-    st.dataframe(grouped[show_cols], use_container_width=True, hide_index=True)
-# ------------------ /CLEAN GROUPING PATCH ------------------
+    # 2) Filter to rows that have ANY mapping in selected frameworks
+    if chosen_fw_raw:
+        mask = findings[chosen_fw_raw].apply(lambda r: any(bool(str(x).strip()) for x in r), axis=1)
+        filtered_df = findings.loc[mask].copy()
+    else:
+        filtered_df = findings.copy()
 
-with tab_filt:
-    st.caption("Detail rows restricted to findings mapped in the selected framework(s).")
-    # Show only base cols + the selected framework columns for clarity
-    _detail_cols = [c for c in _BASE_COLS if c in filtered_df.columns] + chosen_fw_raw
-    pretty_detail = filtered_df[_detail_cols].rename(columns={
-        "source": "Source",
-        "finding_code": "Finding Code",
-        "finding": "Finding",
-        "severity": "Severity",
-        "username": "Username",
-        "last_login": "Last Login",
-        "creds_last_rotated": "Creds Rotated",
-        "has_manager": "Has Manager",
-        **{v: k for k, v in _FW_RAW.items()}
-    })
-    st.dataframe(pretty_detail, use_container_width=True, hide_index=True)
-# ================== /NEW =================================================================
+    # 3) Normalize "Finding Type" (remove numeric parts)
+    def _normalize_msg(s: str) -> str:
+        return re.sub(r"\\d+", "N", str(s))
 
-# ---- Findings table
-st.markdown("### 🔎 Findings mapped to frameworks")
-def _color_sev(val):
-    return f"background-color: {'#ff4d4d' if val=='High' else '#ffa64d' if val=='Medium' else '#85e085'}"
+    filtered_df["Finding Type"] = filtered_df["finding"].apply(_normalize_msg)
 
-styled = findings.rename(columns={
-    "username":"Username","email":"Email","role":"Role","is_admin":"Is Admin",
-    "mfa_enabled":"MFA Enabled","last_login":"Last Login","creds_last_rotated":"Creds Rotated",
-    "has_manager":"Has Manager","severity":"Severity","finding":"Finding",
-    "nist":"NIST 800-53","iso":"ISO 27001","pci":"PCI DSS","soc2":"SOC 2","source":"Source"
-})
+    # 4) Group
+    group_cols = ["finding_code", "Finding Type", "severity"]
+    def _join_uniq(series: pd.Series) -> str:
+        vals = [str(x).strip() for x in series if str(x).strip()]
+        return ", ".join(sorted(set(vals)))
 
-st.dataframe(styled.style.applymap(_color_sev, subset=["Severity"]), use_container_width=True, height=420)
+    present_fw_cols = [c for c in FW_LABEL_TO_COL.values() if c in filtered_df.columns]
+    agg_dict = {"source": _join_uniq, **{c: _join_uniq for c in present_fw_cols}, "username": "nunique"}
 
-# ---- Download evidence
-csv = findings.to_csv(index=False).encode("utf-8")
-st.download_button("⬇️ Export Findings CSV (evidence)", csv, file_name="auditguard_findings.csv", mime="text/csv")
+    grouped = (
+        filtered_df.groupby(group_cols, dropna=False).agg(agg_dict).reset_index()
+        .rename(columns={
+            "finding_code":"Finding Code",
+            "severity":"Severity",
+            "source":"Sources",
+            "username":"Impacted Users",
+            **{v:k for k,v in FW_LABEL_TO_COL.items() if v in present_fw_cols}
+        })
+    )
 
-# ---- Notes / legend
-with st.expander("🗂️ Framework Legend"):
-    st.markdown("""
+    # Sort and present
+    sort_cols = ["Severity", "Impacted Users"] if "Impacted Users" in grouped.columns else ["Severity"]
+    grouped = grouped.sort_values(sort_cols, ascending=[True, False])
+    st.dataframe(grouped, use_container_width=True, hide_index=True)
+
+    st.caption("One row per finding type with impacted users, sources, and mapped controls.")
+
+def page_evidence_export():
+    st.subheader("📄 Evidence & Export")
+    if findings.empty:
+        st.info("Upload data to generate evidence.")
+        return
+    csv = findings.to_csv(index=False).encode("utf-8")
+    st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+
+    with st.expander("🗂️ Framework Legend"):
+        st.markdown("""
 - **NIST 800-53 Rev.5** (e.g., AC-2, AC-6, IA-2, IA-5)  
 - **ISO/IEC 27001:2022** (Annex A, e.g., A.9.x)  
 - **PCI DSS v4.0** (Req. 7–8 user access & auth)  
 - **SOC 2** (Common Criteria CC6.x)
-""")
+        """)
 
-st.markdown("---")
-st.caption("Built by Tanny • AuditGuard prototype (IAM identity & access readiness MSc capstone project)")
+    st.markdown('<div class="ag-card ag-muted">Built by Tanny • AuditGuard prototype (IAM identity & access readiness)</div>', unsafe_allow_html=True)
+
+# --------------------------- Router ---------------------------
+if page == "Overview":
+    page_overview()
+elif page == "Upload & Normalize":
+    page_upload()
+elif page == "Findings & Filters":
+    page_findings()
+elif page == "Framework Mapping":
+    page_framework_mapping()
+elif page == "Evidence & Export":
+    page_evidence_export()
