@@ -1,4 +1,4 @@
-# AuditGuard – IAM Audit Readiness (Enterprise Edition v2)
+# AuditGuard – IAM Audit Readiness (Enterprise Edition v2, no-matplotlib)
 # Author: Tanny Meevasana
 # Purpose: Enterprise-polished Streamlit app for presales and investor demos
 
@@ -271,7 +271,6 @@ def expand_findings(df: pd.DataFrame) -> pd.DataFrame:
                 })
     return pd.DataFrame(rows)
 
-
 # --------------------------- Sidebar: Settings ---------------------------
 st.sidebar.header("Settings")
 density = st.sidebar.select_slider("Table density", options=["Comfortable","Compact"], value="Comfortable")
@@ -343,6 +342,12 @@ if not data.empty and source_filter:
 
 findings = expand_findings(data) if not data.empty else pd.DataFrame()
 
+# --------------------------- Helper: native chart ---------------------------
+def render_severity_chart(df):
+    order = ["High", "Medium", "Low"]
+    counts = df["severity"].value_counts().reindex(order).fillna(0).astype(int)
+    st.bar_chart(counts, height=220)
+
 # --------------------------- Overview Cards ---------------------------
 with st.container():
     c1, c2, c3, c4 = st.columns(4)
@@ -387,14 +392,8 @@ with tab_findings:
         # Apply severity filter
         df_show = findings[findings["severity"].isin(sev_filter)].copy() if sev_filter else findings.copy()
 
-        import matplotlib.pyplot as plt
-        counts = df_show["severity"].value_counts().reindex(["High","Medium","Low"]).fillna(0)
-        fig, ax = plt.subplots()
-        ax.bar(counts.index.astype(str), counts.values)
-        ax.set_title("Findings by Severity")
-        ax.set_xlabel("Severity")
-        ax.set_ylabel("Count")
-        st.pyplot(fig)
+        # Native chart (no matplotlib)
+        render_severity_chart(df_show)
 
         # Table
         pretty = df_show.rename(columns={
