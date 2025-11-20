@@ -1,6 +1,5 @@
 # AuditGuard – IAM Audit Readiness (Enterprise Edition v2, with Week 15 & 16)
 # Author: Tanny Meevasana
-# Purpose: Enterprise-polished Streamlit app for presales and investor demos
 
 import re
 from datetime import datetime
