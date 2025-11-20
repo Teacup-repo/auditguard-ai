@@ -102,17 +102,8 @@ def hero(load_demo_clicked: bool = False):
     </div>
     """, unsafe_allow_html=True)
 
-    # CTA row (use Streamlit buttons for functionality)
-    c1, c2, c3 = st.columns([1,1,1])
-    with c2:
-        a, b = st.columns([1,1])
-        clicked_demo = st.button("▶ Load Demo Data", use_container_width=True, type="primary")
-        clicked_upload = b.button("⬆ Upload CSVs", use_container_width=True)
-    # optional: return clicks if you want to wire them
-    return clicked_demo, clicked_upload
-
-# Call it at the top of your app flow
-clicked_demo, clicked_upload = hero()
+   
+    return None, None
 
 # --------------------------- KPIs under hero ---------------------------
 def kpis_block(findings_df):
