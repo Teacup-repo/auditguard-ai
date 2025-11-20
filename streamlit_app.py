@@ -520,29 +520,29 @@ with tab_export:
         st.info("Upload data to generate export.")
     else:
         # Executive summary
-        # Existing export buttons
-st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+        st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
 
-# --- Add this block below ---
-st.markdown("#### 🧩 Remediation Plan")
-remediation_df = findings[["username", "finding_code", "finding"]].copy()
-remediation_df["Recommended Action"] = remediation_df["finding_code"].map({
-    "MFA_DISABLED_ADMIN": "Enable MFA for admin users (NIST IA-2(1), PCI 8.3.1)",
-    "NO_MFA_USER": "Enforce MFA for all user accounts",
-    "INACTIVE_60": "Disable or review inactive accounts (>60 days)",
-    "STALE_CREDS_90": "Rotate credentials older than 90 days",
-    "ORPHANED_ACCOUNT": "Assign manager or disable orphaned accounts",
-    "EXCESSIVE_ROLE": "Review elevated access; enforce least privilege"
-})
-st.dataframe(remediation_df, use_container_width=True, hide_index=True)
+        # --- Add this block below (indented by 8 spaces) ---
+        st.markdown("#### 🧩 Remediation Plan")
+        remediation_df = findings[["username", "finding_code", "finding"]].copy()
+        remediation_df["Recommended Action"] = remediation_df["finding_code"].map({
+            "MFA_DISABLED_ADMIN": "Enable MFA for admin users (NIST IA-2(1), PCI 8.3.1)",
+            "NO_MFA_USER": "Enforce MFA for all user accounts",
+            "INACTIVE_60": "Disable or review inactive accounts (>60 days)",
+            "STALE_CREDS_90": "Rotate credentials older than 90 days",
+            "ORPHANED_ACCOUNT": "Assign manager or disable orphaned accounts",
+            "EXCESSIVE_ROLE": "Review elevated access; enforce least privilege"
+        })
+        st.dataframe(remediation_df, use_container_width=True, hide_index=True)
 
-fixplan_md = remediation_df.to_markdown(index=False)
-st.download_button(
-    "⬇️ Download Remediation Plan (.md)",
-    fixplan_md.encode("utf-8"),
-    file_name="AuditGuard_Remediation_Plan.md",
-    mime="text/markdown"
-)
+        fixplan_md = remediation_df.to_markdown(index=False)
+        st.download_button(
+            "⬇️ Download Remediation Plan (.md)",
+            fixplan_md.encode("utf-8"),
+            file_name="AuditGuard_Remediation_Plan.md",
+            mime="text/markdown"
+        )
+
 
 # Existing legend block continues
 with st.expander("🗂️ Framework Legend"):
