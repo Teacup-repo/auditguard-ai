@@ -84,7 +84,11 @@ def hero() -> None:
     st.markdown("""
 <div class="ag-hero">
   <h1>
-    <h1>🛡️ IAM Audit Readiness</h1>
+    <h1>
+  <img class="shield" src="https://cdn.jsdelivr.net/npm/lucide-static/icons/shield-check.svg" width="52" alt="shield icon"/>
+  IAM Audit Readiness
+</h1>
+
   </h1>
   <p>
     <span class="ag-badge">Enterprise Demo</span>
