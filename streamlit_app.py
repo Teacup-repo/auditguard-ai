@@ -452,9 +452,18 @@ def run_validation_suite(data_df: pd.DataFrame, findings_df: pd.DataFrame) -> pd
     tests.append({
         "Test": "EXCESSIVE_ROLE when finance/hr role + admin",
         "Expected": True,
-        "Actual": (findings_df.query("finding_code == 'EXCESSIVE_ROLE'").shape[0] >=
-                   data_df.apply(lambda r: ("finance" in str(r.get("role",""))).lower() or ("hr" in str(r.get("role",""))).lower() and bool(r.get("is_admin")), axis=1).sum())
+        "Actual": (
+        findings_df.query("finding_code == 'EXCESSIVE_ROLE'").shape[0] >=
+        data_df.apply(
+            lambda r: (
+                (("finance" in str(r.get("role", "")).lower()) or ("hr" in str(r.get("role", "")).lower()))
+                and bool(r.get("is_admin"))
+                ),
+                axis=1
+            ).sum()
+        )
     })
+
 
     # 8) Framework fields present for rows with findings
     tests.append({
