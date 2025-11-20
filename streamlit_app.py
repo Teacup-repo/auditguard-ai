@@ -516,48 +516,16 @@ with tab_framework:
         st.dataframe(grouped, use_container_width=True, hide_index=True)
 
 with tab_export:
-    if findings.empty or "username" not in findings.columns:
-        st.info("Upload CSVs (or click 'Load sample data') to generate export and remediation report.")
+    # Guard: don't touch anything if no data yet
+    if findings.empty or ("username" not in findings.columns):
+        st.info("Upload CSVs (or click “Load sample data”) to generate the executive summary, remediation plan, and coverage export.")
     else:
-        # --- Executive summary ---
+        # ---------- Executive summary ----------
         total = findings["username"].nunique()
-        high = findings.query("severity == 'High'")["username"].nunique()
-        med = findings.query("severity == 'Medium'")["username"].nunique()
-        low = findings.query("severity == 'Low'")["username"].nunique()
+        high  = findings.query("severity == 'High'")["username"].nunique()
+        med   = findings.query("severity == 'Medium'")["username"].nunique()
+        low   = findings.query("severity == 'Low'")["username"].nunique()
 
-        st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
-
-        # --- Remediation Plan ---
-        st.markdown("#### 🧩 Remediation Plan")
-        remediation_df = findings[["username", "finding_code", "finding"]].copy()
-        remediation_df["Recommended Action"] = remediation_df["finding_code"].map({
-            "MFA_DISABLED_ADMIN": "Enable MFA for admin users (NIST IA-2(1), PCI 8.3.1)",
-            "NO_MFA_USER": "Enforce MFA for all user accounts",
-            "INACTIVE_60": "Disable or review inactive accounts (>60 days)",
-            "STALE_CREDS_90": "Rotate credentials older than 90 days",
-            "ORPHANED_ACCOUNT": "Assign manager or disable orphaned accounts",
-            "EXCESSIVE_ROLE": "Review elevated access; enforce least privilege"
-        }).fillna("Review and remediate per policy")
-
-        st.dataframe(remediation_df, use_container_width=True, hide_index=True)
-
-        fixplan_md = remediation_df.to_markdown(index=False)
-        st.download_button(
-            "⬇️ Download Remediation Plan (.md)",
-            fixplan_md.encode("utf-8"),
-            file_name="AuditGuard_Remediation_Plan.md",
-            mime="text/markdown"
-        )
-
-
-
-# Existing legend block continues
-    with st.expander("🗂️ Framework Legend"):
-        ...
-        total = findings["username"].nunique()
-        high = findings.query("severity == 'High'")["username"].nunique()
-        med = findings.query("severity == 'Medium'")["username"].nunique()
-        low = findings.query("severity == 'Low'")["username"].nunique()
         summary = f"""# AuditGuard – Executive Summary
 
 - **Accounts analyzed:** {total}
@@ -571,24 +539,58 @@ with tab_export:
 """
         st.markdown("#### Executive Summary (Markdown)")
         st.code(summary, language="markdown")
-        st.download_button("⬇️ Download Executive Summary (.md)", summary.encode("utf-8"), file_name="AuditGuard_Executive_Summary.md", mime="text/markdown")
+        st.download_button(
+            "⬇️ Download Executive Summary (.md)",
+            summary.encode("utf-8"),
+            file_name="AuditGuard_Executive_Summary.md",
+            mime="text/markdown"
+        )
 
-        # Findings CSV export
-        csv = findings.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+        # ---------- Findings CSV export ----------
+        findings_csv = findings.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "⬇️ Export Findings CSV",
+            findings_csv,
+            file_name="auditguard_findings.csv",
+            mime="text/csv"
+        )
 
-        # Coverage export (Week 15)
+        # ---------- Remediation Plan ----------
+        st.markdown("#### 🧩 Remediation Plan")
+        remediation_df = findings[["username", "finding_code", "finding"]].copy()
+        remediation_df["Recommended Action"] = remediation_df["finding_code"].map({
+            "MFA_DISABLED_ADMIN": "Enable MFA for admin users (NIST IA-2(1), PCI 8.3.1)",
+            "NO_MFA_USER":       "Enforce MFA for all user accounts",
+            "INACTIVE_60":       "Disable or review inactive accounts (>60 days)",
+            "STALE_CREDS_90":    "Rotate credentials older than 90 days",
+            "ORPHANED_ACCOUNT":  "Assign manager or disable orphaned accounts",
+            "EXCESSIVE_ROLE":    "Review elevated access; enforce least privilege",
+        }).fillna("Review and remediate per policy")
+        st.dataframe(remediation_df, use_container_width=True, hide_index=True)
+
+        fixplan_md = remediation_df.to_markdown(index=False)
+        st.download_button(
+            "⬇️ Download Remediation Plan (.md)",
+            fixplan_md.encode("utf-8"),
+            file_name="AuditGuard_Remediation_Plan.md",
+            mime="text/markdown"
+        )
+
+        # ---------- Coverage export (Week 15) ----------
         scores_df = compute_framework_scores(findings)
         coverage_csv = scores_df.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Export Coverage Scores (CSV)", coverage_csv, file_name="auditguard_framework_coverage.csv", mime="text/csv")
+        st.download_button(
+            "⬇️ Export Coverage Scores (CSV)",
+            coverage_csv,
+            file_name="auditguard_framework_coverage.csv",
+            mime="text/csv"
+        )
 
+        # ---------- Framework legend ----------
         with st.expander("🗂️ Framework Legend"):
             st.markdown("""
-- **NIST 800-53 Rev.5** (e.g., AC-2, AC-6, IA-2, IA-5)  
+- **NIST 800–53 Rev.5** (e.g., AC-2, AC-6, IA-2, IA-5)  
 - **ISO/IEC 27001:2022** (Annex A, e.g., A.9.x)  
 - **PCI DSS v4.0** (Req. 7–8 user access & auth)  
 - **SOC 2** (Common Criteria CC6.x)
             """)
-
-# Footer note
-st.markdown('<div class="ag-note">Built by Tanny • AuditGuard (enterprise demo)</div>', unsafe_allow_html=True)
