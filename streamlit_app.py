@@ -519,8 +519,14 @@ with tab_export:
     if findings.empty:
         st.info("Upload data to generate export.")
     else:
+    if "username" not in findings.columns:
+        st.warning("No valid findings detected yet. Please load sample data or upload CSVs.")
+    else:
         # Executive summary
-        st.download_button("⬇️ Export Findings CSV", csv, file_name="auditguard_findings.csv", mime="text/csv")
+        total = findings["username"].nunique()
+        high = findings.query("severity == 'High'")["username"].nunique()
+        med = findings.query("severity == 'Medium'")["username"].nunique()
+        low = findings.query("severity == 'Low'")["username"].nunique()
 
         # --- Add this block below (indented by 8 spaces) ---
         st.markdown("#### 🧩 Remediation Plan")
