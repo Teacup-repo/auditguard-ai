@@ -416,7 +416,7 @@ with st.container():
 
 # --------------------------- Tabs ---------------------------
 tab_overview, tab_findings, tab_framework, tab_export, tab_validation = st.tabs(
-    ["Overview", "Findings & Filters", "Framework Mapping", "Evidence & Export", "Validation (Week 16)"]
+    ["Overview", "Findings & Filters", "Framework Mapping", "Evidence & Export"]
 )
 
 with tab_overview:
@@ -560,20 +560,6 @@ with tab_export:
 - **PCI DSS v4.0** (Req. 7–8 user access & auth)  
 - **SOC 2** (Common Criteria CC6.x)
             """)
-
-with tab_validation:
-    st.markdown("#### Validation Suite (Week 16)")
-    if data.empty or findings.empty:
-        st.info("Load data (or use sample data) to run validation.")
-    else:
-        results = run_validation_suite(data, findings)
-        total_tests = len(results)
-        passed = int(results["Pass"].sum())
-        st.metric("Tests Passed", f"{passed}/{total_tests}")
-        st.dataframe(results, use_container_width=True, hide_index=True)
-        # Export validation results
-        val_csv = results.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Export Validation Report (CSV)", val_csv, file_name="auditguard_validation_report.csv", mime="text/csv")
 
 # Footer note
 st.markdown('<div class="ag-note">Built by Tanny • AuditGuard (enterprise demo)</div>', unsafe_allow_html=True)
