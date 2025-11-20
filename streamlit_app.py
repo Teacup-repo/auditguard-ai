@@ -547,7 +547,6 @@ with tab_export:
 # Existing legend block continues
 with st.expander("🗂️ Framework Legend"):
     ...
-
         total = findings["username"].nunique()
         high = findings.query("severity == 'High'")["username"].nunique()
         med = findings.query("severity == 'Medium'")["username"].nunique()
