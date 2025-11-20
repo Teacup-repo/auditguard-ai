@@ -420,11 +420,7 @@ tab_overview, tab_findings, tab_framework, tab_export = st.tabs(
 )
 
 with tab_overview:
-    st.markdown(
-        """
-        **Demo narrative**
-        1) Upload exports → 2) Normalize users → 3) Classify risks → 4) Filter & map to frameworks → 5) Export evidence.
-        """
+   
     )
     st.markdown('<div class="ag-card ag-muted">Use the sidebar to switch density, frameworks, severities, and sources. Click “Load sample data” to populate a full story instantly.</div>', unsafe_allow_html=True)
     if data.empty:
