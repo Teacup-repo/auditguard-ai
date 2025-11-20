@@ -568,11 +568,11 @@ with tab_export:
         }).fillna("Review and remediate per policy")
         st.dataframe(remediation_df, use_container_width=True, hide_index=True)
 
-        fixplan_md = remediation_df.to_markdown(index=False)
+        fixplan_md = remediation_df.to_csv(index=False)
         st.download_button(
-            "⬇️ Download Remediation Plan (.md)",
+            "⬇️ Download Remediation Plan (CSV)",
             fixplan_md.encode("utf-8"),
-            file_name="AuditGuard_Remediation_Plan.md",
+            file_name="AuditGuard_Remediation_Plan.csv",
             mime="text/markdown"
         )
 
