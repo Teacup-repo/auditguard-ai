@@ -58,16 +58,58 @@ st.markdown(
 def brand_bar():
     st.markdown(
         """
+        <style>
+          .ag-brand {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 14px 18px;
+              border-bottom: 1px solid rgba(0,0,0,0.05);
+              margin-bottom: 10px;
+              background-color: #FFFFFF;
+          }
+          .ag-left {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+          }
+          .ag-title {
+              font-size: 22px;
+              font-weight: 700;
+              color: #003366;
+              letter-spacing: 0.3px;
+          }
+          .ag-badge {
+              padding: 4px 10px;
+              border-radius: 999px;
+              border: 1px solid #003366;
+              background-color: #F2F6FA;
+              color: #003366;
+              font-size: 12px;
+              font-weight: 500;
+          }
+          .ag-subtitle {
+              font-size: 13px;
+              color: #555;
+              margin-top: 4px;
+              font-style: italic;
+          }
+        </style>
+
         <div class="ag-brand">
-          <div class="left">
-            <span style="font-size:20px; color:#003366">🛡️ <b>AuditGuard</b></span>
-            <span class="ag-badge">Enterprise Demo</span>
-          </div>
-          <div class="ag-note">IAM readiness • Framework mapping • Evidence export</div>
+            <div class="ag-left">
+                <span style="font-size:22px;">🛡️</span>
+                <div>
+                    <div class="ag-title">AuditGuard</div>
+                    <div class="ag-subtitle">Identity & Access Audit Readiness Dashboard</div>
+                </div>
+                <span class="ag-badge">Enterprise Demo</span>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
     )
+
 
 brand_bar()
 
