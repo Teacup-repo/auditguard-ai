@@ -1,0 +1,7 @@
+[theme]
+base = "light"
+primaryColor = "#003366"            # Navy accents
+backgroundColor = "#FFFFFF"         # White app background
+secondaryBackgroundColor = "#F2F6FA"# Light panel background
+textColor = "#000000"               # Black text
+font = "sans serif"
