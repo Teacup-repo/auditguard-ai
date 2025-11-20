@@ -415,7 +415,7 @@ with st.container():
         c4.metric("Low (unique users)", int(low))
 
 # --------------------------- Tabs ---------------------------
-tab_overview, tab_findings, tab_framework, tab_export, tab_validation = st.tabs(
+tab_overview, tab_findings, tab_framework, tab_export = st.tabs(
     ["Overview", "Findings & Filters", "Framework Mapping", "Evidence & Export"]
 )
 
