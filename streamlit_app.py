@@ -16,92 +16,62 @@ st.set_page_config(
     menu_items={
         "Get Help": "mailto:tanny.meeva@gmail.com",
         "Report a bug": "mailto:tanny.meeva@gmail.com",
-        "About": "AuditGuard – IAM identity & access readiness (enterprise demo)"
-    }
+        "About": "AuditGuard – IAM identity & access readiness (enterprise demo)",
+    },
 )
 
-# Minimal CSS for clean, neutral enterprise look
+# --------------------------- Global CSS ---------------------------
 st.markdown(
     """
-    <style>
-  /* Layout */
+<style>
+  /* Layout / tokens */
   .main { padding-top: 0.5rem; }
-  .ag-brand { display:flex; align-items:center; justify-content:space-between;
-              padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:10px;
-              background:#FFFFFF; }
-  .ag-brand .left { display:flex; gap:10px; align-items:center; }
-
-  /* Tokens */
   .ag-badge { padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,0.12);
               font-size:12px; background:#F2F6FA; color:#003366; }
-  .ag-muted, .ag-note { color:#4A4A4A; }
   .ag-card { border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px; margin-bottom:12px;
              background:#FFFFFF; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
-  .stMetric { background:#F7FAFE; border-radius:12px; padding:12px; }
-
-  /* Pills & severity */
-  .ag-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px;
-             border:1px solid rgba(0,0,0,0.12); background:#FFFFFF; }
-  .ag-sev-High   { background:#FFF5F5; }   /* soft red */
-  .ag-sev-Medium { background:#FFF7E6; }   /* soft amber */
-  .ag-sev-Low    { background:#F2FBF4; }   /* soft green */
-
-  /* Tables */
+  .ag-sev-High   { background:#FFF5F5; }
+  .ag-sev-Medium { background:#FFF7E6; }
+  .ag-sev-Low    { background:#F2FBF4; }
   .compact-table table { font-size:12px; background:#FFFFFF; }
   footer { visibility:hidden; }
-</style>
 
-    """,
-    unsafe_allow_html=True
-)
-
-    # --------------------------- HERO / BRAND ---------------------------
-def hero(load_demo_clicked: bool = False):
-    st.markdown("""
-<style>
-  .ag-hero {
-    text-align: center;
-    padding: 60px 20px 20px;
-  }
+  /* HERO */
+  .ag-hero { text-align:center; padding:60px 20px 20px; }
   .ag-hero h1 {
-    font-size: 46px;
-    font-weight: 800;
-    color: #003366;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-  .ag-hero img {
-    width: 52px;
-    vertical-align: middle;
+      font-size:46px; font-weight:800; color:#003366; margin:0 0 6px 0;
+      display:flex; align-items:center; justify-content:center; gap:10px;
   }
   .ag-hero p {
-    font-size: 18px;
-    color: #4a4a4a;
-    margin-top: 8px;
-    max-width: 850px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.4;
+      font-size:18px; color:#4a4a4a; margin:8px auto 0; max-width:900px; line-height:1.4;
   }
-</style>
 
+  /* KPI grid */
+  .ag-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px auto 6px; max-width:1000px; }
+  .ag-kpi  { background:#FFFFFF; border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px; }
+  .ag-kpi .k { font-weight:700; font-size:20px; color:#003366; }
+  .ag-kpi .l { color:#6c757d; font-size:12px; }
+  @media (max-width: 900px) { .ag-kpis { grid-template-columns:repeat(2,1fr); } }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+# --------------------------- HERO / BRAND ---------------------------
+def hero() -> None:
+    st.markdown(
+        """
 <div class="ag-hero">
-  <h1>
-    <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="shield icon"/>
-    IAM Audit Readiness
-  </h1>
+  <h1>🛡️ IAM Audit Readiness</h1>
   <p>
     <b>AuditGuard</b> transforms identity exports from AWS, Salesforce, and Azure into actionable audit insights —
     detecting misconfigurations, mapping to <b>NIST</b>, <b>ISO 27001</b>, <b>PCI DSS</b>, and <b>SOC 2</b>,
     and generating real-time evidence for enterprise compliance.
   </p>
 </div>
-""", unsafe_allow_html=True)
-
-    return None, None
+""",
+        unsafe_allow_html=True,
+    )
 
 # --------------------------- KPIs under hero ---------------------------
 def kpis_block(findings_df):
@@ -113,33 +83,18 @@ def kpis_block(findings_df):
         k3 = findings_df.query("severity == 'Medium'")["username"].nunique()
         k4 = findings_df.query("severity == 'Low'")["username"].nunique()
 
-    st.markdown("""
+    st.markdown(
+        f"""
     <div class="ag-kpis">
-      <div class="ag-kpi"><div class="k">{k1}</div><div class="l">Accounts analyzed</div></div>
-      <div class="ag-kpi"><div class="k">{k2}</div><div class="l">High (unique users)</div></div>
-      <div class="ag-kpi"><div class="k">{k3}</div><div class="l">Medium (unique users)</div></div>
-      <div class="ag-kpi"><div class="k">{k4}</div><div class="l">Low (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{int(k1)}</div><div class="l">Accounts analyzed</div></div>
+      <div class="ag-kpi"><div class="k">{int(k2)}</div><div class="l">High (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{int(k3)}</div><div class="l">Medium (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{int(k4)}</div><div class="l">Low (unique users)</div></div>
     </div>
-    """.format(k1=int(k1), k2=int(k2), k3=int(k3), k4=int(k4)), unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
-# 1️⃣ define helper first
-def kpis_block(findings_df):
-    if findings_df is None or findings_df.empty:
-        k1 = k2 = k3 = k4 = 0
-    else:
-        k1 = findings_df["username"].nunique()
-        k2 = findings_df.query("severity == 'High'")["username"].nunique()
-        k3 = findings_df.query("severity == 'Medium'")["username"].nunique()
-        k4 = findings_df.query("severity == 'Low'")["username"].nunique()
-
-    st.markdown(f"""
-    <div class="ag-kpis">
-      <div class="ag-kpi"><div class="k">{k1}</div><div class="l">Accounts analyzed</div></div>
-      <div class="ag-kpi"><div class="k">{k2}</div><div class="l">High (unique users)</div></div>
-      <div class="ag-kpi"><div class="k">{k3}</div><div class="l">Medium (unique users)</div></div>
-      <div class="ag-kpi"><div class="k">{k4}</div><div class="l">Low (unique users)</div></div>
-    </div>
-    """, unsafe_allow_html=True)
 
 
 st.subheader("IAM Audit Readiness")
