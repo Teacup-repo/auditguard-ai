@@ -421,7 +421,6 @@ tab_overview, tab_findings, tab_framework, tab_export = st.tabs(
 
 with tab_overview:
    
-    )
     st.markdown('<div class="ag-card ag-muted">Use the sidebar to switch density, frameworks, severities, and sources. Click “Load sample data” to populate a full story instantly.</div>', unsafe_allow_html=True)
     if data.empty:
         st.info("Upload CSVs (or click “Load sample data”) to begin.")
