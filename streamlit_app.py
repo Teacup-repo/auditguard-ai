@@ -152,10 +152,6 @@ def kpis_block(findings_df):
     </div>
     """, unsafe_allow_html=True)
 
-
-# Later, after you compute `findings`:
-kpis_block(findings)
-
 # If hero demo button pressed, set your existing flag
 if clicked_demo:
     use_samples = True
