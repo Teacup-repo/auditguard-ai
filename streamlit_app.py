@@ -24,23 +24,33 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-      .main {padding-top: 0.5rem;}
-      .ag-brand {display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:10px;}
-      .ag-brand .left {display:flex; gap:10px; align-items:center;}
-      .ag-badge {padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,0.1); font-size:12px;}
-      .stMetric {background: rgba(0,0,0,0.03); border-radius: 12px; padding: 12px;}
-      .ag-card {border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; padding: 18px; margin-bottom: 12px; background: rgba(255,255,255,0.6);}
-      .ag-muted {color:#666;}
-      .ag-note {font-size:12px; color:#666;}
-      .ag-hstack {display:flex; gap:10px; align-items:center;}
-      .ag-pill {display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid rgba(0,0,0,0.12);}
-      .ag-sev-High {background:#fff0f0;}
-      .ag-sev-Medium {background:#fff7e6;}
-      .ag-sev-Low {background:#f0fff4;}
-      footer {visibility: hidden;}
-      /* Table density */
-      .compact-table table {font-size: 12px;}
-    </style>
+  /* Layout */
+  .main { padding-top: 0.5rem; }
+  .ag-brand { display:flex; align-items:center; justify-content:space-between;
+              padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.06); margin-bottom:10px;
+              background:#FFFFFF; }
+  .ag-brand .left { display:flex; gap:10px; align-items:center; }
+
+  /* Tokens */
+  .ag-badge { padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,0.12);
+              font-size:12px; background:#F2F6FA; color:#003366; }
+  .ag-muted, .ag-note { color:#4A4A4A; }
+  .ag-card { border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px; margin-bottom:12px;
+             background:#FFFFFF; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .stMetric { background:#F7FAFE; border-radius:12px; padding:12px; }
+
+  /* Pills & severity */
+  .ag-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px;
+             border:1px solid rgba(0,0,0,0.12); background:#FFFFFF; }
+  .ag-sev-High   { background:#FFF5F5; }   /* soft red */
+  .ag-sev-Medium { background:#FFF7E6; }   /* soft amber */
+  .ag-sev-Low    { background:#F2FBF4; }   /* soft green */
+
+  /* Tables */
+  .compact-table table { font-size:12px; background:#FFFFFF; }
+  footer { visibility:hidden; }
+</style>
+
     """,
     unsafe_allow_html=True
 )
