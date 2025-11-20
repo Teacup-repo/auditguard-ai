@@ -10,7 +10,7 @@ import streamlit as st
 
 # --------------------------- Page / Theming ---------------------------
 st.set_page_config(
-    page_title="🛡️ AuditGuard – IAM Audit Readiness (Enterprise)",
+    page_title="AuditGuard – IAM Audit Readiness (Enterprise)",
     page_icon="🛡️",
     layout="wide",
     menu_items={
@@ -85,7 +85,7 @@ def hero() -> None:
 <div class="ag-hero">
   <h1>
     <img class="shield" src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="shield"/>
-    IAM Audit Readiness
+    🛡️ IAM Audit Readiness
   </h1>
   <p>
     <span class="ag-badge">Enterprise Demo</span>
