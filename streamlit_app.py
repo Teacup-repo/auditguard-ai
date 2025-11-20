@@ -21,57 +21,79 @@ st.set_page_config(
 )
 
 # --------------------------- Global CSS ---------------------------
-st.markdown(
-    """
+st.markdown("""
 <style>
-  /* Layout / tokens */
-  .main { padding-top: 0.5rem; }
-  .ag-badge { padding:2px 8px; border-radius:999px; border:1px solid rgba(0,0,0,0.12);
-              font-size:12px; background:#F2F6FA; color:#003366; }
-  .ag-card { border:1px solid rgba(0,0,0,0.08); border-radius:14px; padding:18px; margin-bottom:12px;
-             background:#FFFFFF; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
-  .ag-sev-High   { background:#FFF5F5; }
-  .ag-sev-Medium { background:#FFF7E6; }
-  .ag-sev-Low    { background:#F2FBF4; }
-  .compact-table table { font-size:12px; background:#FFFFFF; }
-  footer { visibility:hidden; }
-
-  /* HERO */
-  .ag-hero { text-align:center; padding:60px 20px 20px; }
-  .ag-hero h1 {
-      font-size:46px; font-weight:800; color:#003366; margin:0 0 6px 0;
-      display:flex; align-items:center; justify-content:center; gap:10px;
+  /* === Base / theming === */
+  :root{
+    --ag-navy:#0A2F5A;       /* primary */
+    --ag-navy-600:#123E75;   /* hover/depth */
+    --ag-panel:#F6F8FC;      /* light panel */
+    --ag-text:#1F2937;       /* body text */
+    --ag-muted:#6B7280;      /* captions */
+    --ag-border:rgba(10,47,90,.12);
   }
-  .ag-hero p {
-      font-size:18px; color:#4a4a4a; margin:8px auto 0; max-width:900px; line-height:1.4;
+  .main { padding-top: 0.25rem; }
+  #MainMenu {visibility:hidden;} footer {visibility:hidden;}
+
+  /* Page max-width feels more “web app” than “notebook” */
+  .block-container { max-width: 1200px; }
+
+  /* Cards / tokens */
+  .ag-card{
+    background:#fff; border:1px solid var(--ag-border); border-radius:14px;
+    padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); margin-bottom:12px;
+  }
+  .ag-badge{
+    padding:2px 8px; border-radius:999px; border:1px solid var(--ag-border);
+    font-size:12px; background:#EAF1FC; color:var(--ag-navy);
+  }
+  .ag-muted{ color:var(--ag-muted); }
+
+  /* === HERO === */
+  .ag-hero{ text-align:center; padding:56px 20px 8px; }
+  .ag-hero h1{
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    letter-spacing:.2px; font-weight:800; font-size:48px; color:var(--ag-navy);
+    margin:0 0 6px; display:flex; align-items:center; justify-content:center; gap:12px;
+  }
+  .ag-hero .shield{ width:52px; height:52px; }
+  .ag-hero p{
+    font-size:18px; line-height:1.45; color:var(--ag-muted);
+    margin:8px auto 0; max-width:960px;
   }
 
   /* KPI grid */
-  .ag-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px auto 6px; max-width:1000px; }
-  .ag-kpi  { background:#FFFFFF; border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px; }
-  .ag-kpi .k { font-weight:700; font-size:20px; color:#003366; }
-  .ag-kpi .l { color:#6c757d; font-size:12px; }
-  @media (max-width: 900px) { .ag-kpis { grid-template-columns:repeat(2,1fr); } }
+  .ag-kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:18px auto 8px; max-width:1000px; }
+  .ag-kpi{ background:#fff; border:1px solid var(--ag-border); border-radius:14px; padding:14px; }
+  .ag-kpi .k{ font-weight:800; font-size:22px; color:var(--ag-navy); }
+  .ag-kpi .l{ font-size:12px; color:var(--ag-muted); }
+  @media (max-width:900px){ .ag-kpis{ grid-template-columns:repeat(2,1fr); } }
+
+  /* Table option */
+  .compact-table table{ font-size:12px; background:#fff; }
+
+  /* Streamlit native button tune-up for primary usage */
+  .stButton>button, .stDownloadButton>button{
+    border-radius:10px; padding:.6rem 1rem; font-weight:600;
+  }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # --------------------------- HERO / BRAND ---------------------------
 def hero() -> None:
-    st.markdown(
-        """
+    st.markdown("""
 <div class="ag-hero">
-  <h1>🛡️ IAM Audit Readiness</h1>
+  <h1>
+    <img class="shield" src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="shield"/>
+    IAM Audit Readiness
+  </h1>
   <p>
-    <b>AuditGuard</b> transforms identity exports from AWS, Salesforce, and Azure into actionable audit insights —
-    detecting misconfigurations, mapping to <b>NIST</b>, <b>ISO 27001</b>, <b>PCI DSS</b>, and <b>SOC 2</b>,
-    and generating real-time evidence for enterprise compliance.
+    <span class="ag-badge">Enterprise Demo</span>
+    &nbsp; <b>AuditGuard</b> turns identity exports into audit evidence—detecting misconfigurations, mapping to
+    <b>NIST</b>, <b>ISO 27001</b>, <b>PCI DSS</b>, and <b>SOC&nbsp;2</b>, and generating ready-to-share artifacts in minutes.
   </p>
 </div>
-""",
-        unsafe_allow_html=True,
-    )
+""", unsafe_allow_html=True)
 
 # --------------------------- KPIs under hero ---------------------------
 def kpis_block(findings_df):
