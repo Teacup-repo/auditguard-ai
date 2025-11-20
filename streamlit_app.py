@@ -58,51 +58,49 @@ st.markdown(
     # --------------------------- HERO / BRAND ---------------------------
 def hero(load_demo_clicked: bool = False):
     st.markdown("""
-    <style>
-      .ag-hero { text-align:center; padding: 16px 8px 6px; }
-      .ag-hero h1 { 
-        margin: 0 0 6px 0; 
-        font-size: 40px; 
-        line-height: 1.10; 
-        color:#0A2540;   /* deep navy */
-        letter-spacing: .2px;
-      }
-      .ag-hero p {
-        margin: 0 auto 14px;
-        max-width: 1000px;
-        font-size: 18px; 
-        color:#495057;
-      }
-      .ag-badge {
-        display:inline-block; 
-        margin-left: 10px;
-        padding: 5px 12px; 
-        border-radius: 999px; 
-        border: 1px solid #0A2540; 
-        background:#F2F6FA; 
-        color:#0A2540; 
-        font-size: 12px; 
-        font-weight: 600;
-        vertical-align: middle;
-      }
-      .ag-cta { display:flex; justify-content:center; gap:10px; margin-top:10px;}
-      .ag-kpis { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin:14px auto 6px; max-width:1000px;}
-      .ag-kpi { background:#FFFFFF; border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px; }
-      .ag-kpi .k { font-weight:700; font-size:20px; color:#0A2540; }
-      .ag-kpi .l { color:#6c757d; font-size:12px; }
-      @media (max-width: 900px) { .ag-kpis { grid-template-columns: repeat(2,1fr);} }
-    </style>
-    """, unsafe_allow_html=True)
+<style>
+  .ag-hero {
+    text-align: center;
+    padding: 60px 20px 20px;
+  }
+  .ag-hero h1 {
+    font-size: 46px;
+    font-weight: 800;
+    color: #003366;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .ag-hero img {
+    width: 52px;
+    vertical-align: middle;
+  }
+  .ag-hero p {
+    font-size: 18px;
+    color: #4a4a4a;
+    margin-top: 8px;
+    max-width: 850px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.4;
+  }
+</style>
 
-    st.markdown("""
-    <div class="ag-hero">
-      <h1>🛡️ AuditGuard <span class="ag-badge">Enterprise Demo</span></h1>
-      <p>Real-time IAM audit readiness. Normalize identity exports, detect misconfigurations, 
-      map to NIST / ISO 27001 / PCI DSS / SOC 2, and generate audit-ready evidence — in minutes.</p>
-    </div>
-    """, unsafe_allow_html=True)
+<div class="ag-hero">
+  <h1>
+    <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" alt="shield icon"/>
+    IAM Audit Readiness
+  </h1>
+  <p>
+    <b>AuditGuard</b> transforms identity exports from AWS, Salesforce, and Azure into actionable audit insights —
+    detecting misconfigurations, mapping to <b>NIST</b>, <b>ISO 27001</b>, <b>PCI DSS</b>, and <b>SOC 2</b>,
+    and generating real-time evidence for enterprise compliance.
+  </p>
+</div>
+""", unsafe_allow_html=True)
 
-   
     return None, None
 
 # --------------------------- KPIs under hero ---------------------------
