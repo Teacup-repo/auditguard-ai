@@ -60,7 +60,7 @@ def brand_bar():
         """
         <div class="ag-brand">
           <div class="left">
-            <span style="font-size:20px">🛡️ <b>AuditGuard</b></span>
+            <span style="font-size:20px; color:#003366">🛡️ <b>AuditGuard</b></span>
             <span class="ag-badge">Enterprise Demo</span>
           </div>
           <div class="ag-note">IAM readiness • Framework mapping • Evidence export</div>
