@@ -133,6 +133,29 @@ def kpis_block(findings_df):
     </div>
     """.format(k1=int(k1), k2=int(k2), k3=int(k3), k4=int(k4)), unsafe_allow_html=True)
 
+# 1️⃣ define helper first
+def kpis_block(findings_df):
+    if findings_df is None or findings_df.empty:
+        k1 = k2 = k3 = k4 = 0
+    else:
+        k1 = findings_df["username"].nunique()
+        k2 = findings_df.query("severity == 'High'")["username"].nunique()
+        k3 = findings_df.query("severity == 'Medium'")["username"].nunique()
+        k4 = findings_df.query("severity == 'Low'")["username"].nunique()
+
+    st.markdown(f"""
+    <div class="ag-kpis">
+      <div class="ag-kpi"><div class="k">{k1}</div><div class="l">Accounts analyzed</div></div>
+      <div class="ag-kpi"><div class="k">{k2}</div><div class="l">High (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{k3}</div><div class="l">Medium (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{k4}</div><div class="l">Low (unique users)</div></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 2️⃣ later in the script (after findings exists)
+kpis_block(findings)
+
+
 # Later, after you compute `findings`:
 kpis_block(findings)
 
