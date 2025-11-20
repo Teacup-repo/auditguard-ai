@@ -152,9 +152,6 @@ def kpis_block(findings_df):
     </div>
     """, unsafe_allow_html=True)
 
-# 2️⃣ later in the script (after findings exists)
-kpis_block(findings)
-
 
 # Later, after you compute `findings`:
 kpis_block(findings)
