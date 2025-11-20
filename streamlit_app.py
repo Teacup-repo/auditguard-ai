@@ -143,9 +143,6 @@ def kpis_block(findings_df):
     </div>
     """, unsafe_allow_html=True)
 
-# If hero demo button pressed, set your existing flag
-if clicked_demo:
-    use_samples = True
 
 st.subheader("IAM Audit Readiness")
 st.caption(
