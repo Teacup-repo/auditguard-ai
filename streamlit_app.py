@@ -10,7 +10,7 @@ import streamlit as st
 
 # --------------------------- Page / Theming ---------------------------
 st.set_page_config(
-    page_title="AuditGuard – IAM Audit Readiness (Enterprise)",
+    page_title="🛡️ AuditGuard – IAM Audit Readiness (Enterprise)",
     page_icon="🛡️",
     layout="wide",
     menu_items={
