@@ -56,65 +56,99 @@ st.markdown(
 )
 
 def brand_bar():
-    st.markdown(
-        """
-        <style>
-          .ag-brand {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              padding: 14px 18px;
-              border-bottom: 1px solid rgba(0,0,0,0.05);
-              margin-bottom: 10px;
-              background-color: #FFFFFF;
-          }
-          .ag-left {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-          }
-          .ag-title {
-              font-size: 22px;
-              font-weight: 700;
-              color: #003366;
-              letter-spacing: 0.3px;
-          }
-          .ag-badge {
-              padding: 4px 10px;
-              border-radius: 999px;
-              border: 1px solid #003366;
-              background-color: #F2F6FA;
-              color: #003366;
-              font-size: 12px;
-              font-weight: 500;
-          }
-          .ag-subtitle {
-              font-size: 13px;
-              color: #555;
-              margin-top: 4px;
-              font-style: italic;
-          }
-        </style>
 
-        <div class="ag-brand">
-            <div class="ag-left">
-                <span style="font-size:22px;">🛡️</span>
-                <div>
-                    <div class="ag-title">AuditGuard</div>
-                    <div class="ag-subtitle">Identity & Access Audit Readiness Dashboard</div>
-                </div>
-                <span class="ag-badge">Enterprise Demo</span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # --------------------------- HERO / BRAND ---------------------------
+def hero(load_demo_clicked: bool = False):
+    st.markdown("""
+    <style>
+      .ag-hero { text-align:center; padding: 16px 8px 6px; }
+      .ag-hero h1 { 
+        margin: 0 0 6px 0; 
+        font-size: 40px; 
+        line-height: 1.10; 
+        color:#0A2540;   /* deep navy */
+        letter-spacing: .2px;
+      }
+      .ag-hero p {
+        margin: 0 auto 14px;
+        max-width: 1000px;
+        font-size: 18px; 
+        color:#495057;
+      }
+      .ag-badge {
+        display:inline-block; 
+        margin-left: 10px;
+        padding: 5px 12px; 
+        border-radius: 999px; 
+        border: 1px solid #0A2540; 
+        background:#F2F6FA; 
+        color:#0A2540; 
+        font-size: 12px; 
+        font-weight: 600;
+        vertical-align: middle;
+      }
+      .ag-cta { display:flex; justify-content:center; gap:10px; margin-top:10px;}
+      .ag-kpis { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin:14px auto 6px; max-width:1000px;}
+      .ag-kpi { background:#FFFFFF; border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px; }
+      .ag-kpi .k { font-weight:700; font-size:20px; color:#0A2540; }
+      .ag-kpi .l { color:#6c757d; font-size:12px; }
+      @media (max-width: 900px) { .ag-kpis { grid-template-columns: repeat(2,1fr);} }
+    </style>
+    """, unsafe_allow_html=True)
 
+    st.markdown("""
+    <div class="ag-hero">
+      <h1>🛡️ AuditGuard <span class="ag-badge">Enterprise Demo</span></h1>
+      <p>Real-time IAM audit readiness. Normalize identity exports, detect misconfigurations, 
+      map to NIST / ISO 27001 / PCI DSS / SOC 2, and generate audit-ready evidence — in minutes.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-brand_bar()
+    # CTA row (use Streamlit buttons for functionality)
+    c1, c2, c3 = st.columns([1,1,1])
+    with c2:
+        a, b = st.columns([1,1])
+        clicked_demo = st.button("▶ Load Demo Data", use_container_width=True, type="primary")
+        clicked_upload = b.button("⬆ Upload CSVs", use_container_width=True)
+    # optional: return clicks if you want to wire them
+    return clicked_demo, clicked_upload
+
+# Call it at the top of your app flow
+clicked_demo, clicked_upload = hero()
+
+# --------------------------- KPIs under hero ---------------------------
+def kpis_block(findings_df):
+    if findings_df is None or findings_df.empty:
+        k1 = k2 = k3 = k4 = 0
+    else:
+        k1 = findings_df["username"].nunique()
+        k2 = findings_df.query("severity == 'High'")["username"].nunique()
+        k3 = findings_df.query("severity == 'Medium'")["username"].nunique()
+        k4 = findings_df.query("severity == 'Low'")["username"].nunique()
+
+    st.markdown("""
+    <div class="ag-kpis">
+      <div class="ag-kpi"><div class="k">{k1}</div><div class="l">Accounts analyzed</div></div>
+      <div class="ag-kpi"><div class="k">{k2}</div><div class="l">High (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{k3}</div><div class="l">Medium (unique users)</div></div>
+      <div class="ag-kpi"><div class="k">{k4}</div><div class="l">Low (unique users)</div></div>
+    </div>
+    """.format(k1=int(k1), k2=int(k2), k3=int(k3), k4=int(k4)), unsafe_allow_html=True)
+
+# Later, after you compute `findings`:
+kpis_block(findings)
+
+# If hero demo button pressed, set your existing flag
+if clicked_demo:
+    use_samples = True
 
 st.subheader("IAM Audit Readiness")
-st.caption("Normalize IAM exports, classify identity risk, map to frameworks, and export evidence — built for presales, security leaders, and investors.")
+st.caption(
+    "AuditGuard transforms raw identity exports from AWS, Salesforce, and Azure into actionable audit evidence — "
+    "flagging missing MFA, stale credentials, orphaned accounts, and excessive roles, then mapping each to NIST, "
+    "ISO 27001, PCI DSS, and SOC 2 for instant readiness."
+)
+
 
 # --------------------------- Constants ---------------------------
 CONTROL_MAP: Dict[str, Dict[str, object]] = {
