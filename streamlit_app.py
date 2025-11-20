@@ -55,8 +55,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-def brand_bar():
-
     # --------------------------- HERO / BRAND ---------------------------
 def hero(load_demo_clicked: bool = False):
     st.markdown("""
